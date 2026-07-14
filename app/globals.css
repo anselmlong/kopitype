@@ -9,8 +9,6 @@
   --accent-soft: #8a6b4f;
   --error: #cf6b5d; /* wrong char */
   --error-bg: #3a201c; /* extra char background */
-  --font-mono: "SFMono-Regular", "JetBrains Mono", "Fira Code", ui-monospace,
-    "Menlo", "Consolas", monospace;
 }
 
 * {
@@ -27,20 +25,30 @@ body {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-mono);
+  /* --font-mono is set on <html> by next/font (self-hosted JetBrains Mono) */
+  font-family: var(--font-mono), ui-monospace, "SFMono-Regular", "Menlo",
+    "Consolas", monospace;
   -webkit-font-smoothing: antialiased;
   line-height: 1.6;
   overflow-x: hidden;
 }
 
+/* keyboard focus should be visible everywhere */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 0.2rem;
+}
+
 .app {
-  max-width: 1000px;
+  max-width: 1300px;
   min-height: 100vh;
   margin: 0 auto;
-  padding: 3rem 1.5rem 2rem;
+  padding: 2rem 2rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 /* ---- header ---- */
@@ -61,6 +69,23 @@ body {
 .tagline {
   color: var(--sub);
   font-size: 0.85rem;
+}
+
+/* ---- test block: modebar pinned high, words own the middle ---- */
+.test {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.test-center {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  /* bias slightly above true center, like monkeytype */
+  padding-bottom: 10vh;
 }
 
 /* ---- mode bar ---- */
@@ -93,7 +118,7 @@ body {
   font-family: inherit;
   font-size: inherit;
   cursor: pointer;
-  padding: 0.1rem 0.2rem;
+  padding: 0.35rem 0.3rem; /* comfortable tap targets */
   transition: color 0.12s ease;
 }
 .modebar button:hover {
@@ -104,6 +129,9 @@ body {
 }
 .modebar .uncensored.on {
   color: var(--error);
+}
+.modebar .sound.on {
+  color: var(--accent-soft);
 }
 
 /* ---- typing area ---- */
@@ -126,6 +154,7 @@ body {
   opacity: 0.55;
 }
 .wordstream-inner {
+  position: relative; /* offset parent for the gliding caret */
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
@@ -135,6 +164,9 @@ body {
   margin-right: 0.65rem;
   white-space: nowrap;
   color: var(--sub);
+}
+.char {
+  display: inline-block; /* reliable metrics for the gliding caret */
 }
 .char.correct {
   color: var(--text);
@@ -149,23 +181,38 @@ body {
   color: var(--error);
   background: var(--error-bg);
 }
+
+/* one absolutely-positioned caret that glides between characters */
 .caret {
-  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 2px;
-  height: 1.5rem;
   background: var(--accent);
-  margin: 0 -1px;
-  vertical-align: text-bottom;
   border-radius: 1px;
   animation: blink 1s steps(1) infinite;
+  transition: transform 0.085s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+  pointer-events: none;
 }
 .wordstream.typing .caret {
   animation: none;
+}
+.wordstream.blurred .caret {
+  opacity: 0;
 }
 @keyframes blink {
   50% {
     opacity: 0;
   }
+}
+
+/* attribution for the quote being typed */
+.quote-source {
+  margin-top: 0.4rem;
+  color: var(--sub);
+  font-size: 0.85rem;
+  transition: opacity 0.2s ease;
 }
 
 /* ---- focus hint ---- */
@@ -179,6 +226,17 @@ body {
   font-size: 0.95rem;
   gap: 0.4rem;
   pointer-events: none;
+}
+.hint-touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .hint-pointer {
+    display: none;
+  }
+  .hint-touch {
+    display: inline;
+  }
 }
 
 /* hidden input that actually captures typing */
@@ -195,6 +253,25 @@ body {
   z-index: 2;
 }
 
+/* ---- mid-test retry: quiet, centered, there when you fumble ---- */
+.retry {
+  display: flex;
+  justify-content: center;
+}
+.retry button {
+  background: none;
+  border: none;
+  color: var(--sub-dim);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.4rem 1rem;
+  transition: color 0.12s ease;
+}
+.retry button:hover {
+  color: var(--text);
+}
+
 /* ---- timer ---- */
 .timer {
   color: var(--accent);
@@ -206,12 +283,49 @@ body {
 .stats {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 1.5rem;
+}
+.stats-context {
+  color: var(--sub);
+  font-size: 0.9rem;
+}
+.new-best {
+  margin-left: 1rem;
+  color: var(--accent);
+  display: inline-block;
+  animation: best-pop 0.45s cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+@keyframes best-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) translateY(2px);
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.stat.best .value {
+  animation: best-glow 0.9s ease-out both;
+}
+@keyframes best-glow {
+  0% {
+    text-shadow: 0 0 0 rgba(200, 147, 95, 0);
+  }
+  35% {
+    text-shadow: 0 0 24px rgba(200, 147, 95, 0.55);
+  }
+  100% {
+    text-shadow: 0 0 0 rgba(200, 147, 95, 0);
+  }
 }
 .stats-main {
   display: flex;
   gap: 2.5rem;
-  align-items: baseline;
+  align-items: flex-end;
   flex-wrap: wrap;
 }
 .stat .label {
@@ -279,8 +393,15 @@ body {
   color: var(--text);
 }
 
-/* ---- confirm dialog for uncensored ---- */
+/* ---- confirm popover for uncensored (no layout shift) ---- */
+.modebar-wrap {
+  position: relative;
+}
 .confirm {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 10;
   background: var(--bg-raised);
   border: 1px solid var(--sub-dim);
   border-radius: 0.6rem;
@@ -290,6 +411,18 @@ body {
   gap: 1rem;
   flex-wrap: wrap;
   font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  animation: confirm-in 0.15s ease-out both;
+}
+@keyframes confirm-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .confirm .warn {
   color: var(--error);
@@ -324,5 +457,22 @@ body {
   }
   .stat .value {
     font-size: 2.6rem;
+  }
+  .modebar {
+    gap: 0.25rem 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    transition: none;
+  }
+  .wordstream-inner {
+    transition: none;
+  }
+  .new-best,
+  .stat.best .value,
+  .confirm {
+    animation: none;
   }
 }

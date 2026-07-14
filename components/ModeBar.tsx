@@ -11,6 +11,8 @@ interface ModeBarProps {
   onDuration: (d: number) => void;
   uncensored: boolean;
   onToggleUncensored: () => void;
+  soundOn: boolean;
+  onToggleSound: () => void;
 }
 
 export default function ModeBar({
@@ -22,6 +24,8 @@ export default function ModeBar({
   onDuration,
   uncensored,
   onToggleUncensored,
+  soundOn,
+  onToggleSound,
 }: ModeBarProps) {
   return (
     <div className="modebar" role="toolbar" aria-label="test options">
@@ -62,6 +66,17 @@ export default function ModeBar({
         title="hokkien vulgarities. off by default."
       >
         {uncensored ? "uncensored ✓" : "uncensored"}
+      </button>
+
+      <div className="divider" aria-hidden />
+
+      <button
+        className={"sound" + (soundOn ? " on" : "")}
+        aria-pressed={soundOn}
+        onClick={onToggleSound}
+        title="quiet keystroke and finish sounds"
+      >
+        {soundOn ? "sound ✓" : "sound"}
       </button>
     </div>
   );

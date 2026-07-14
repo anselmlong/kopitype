@@ -1,18 +1,37 @@
 "use client";
 
 import { TestResult } from "@/lib/wpm";
+import { PersonalBest } from "@/lib/records";
 
 interface StatsProps {
   result: TestResult;
   previous: TestResult | null;
+  /** Best before this run (null on a first-ever run). */
+  personalBest: PersonalBest | null;
+  isNewBest: boolean;
+  modeLabel: string;
+  duration: number;
   onRestart: () => void;
 }
 
-export default function Stats({ result, previous, onRestart }: StatsProps) {
+export default function Stats({
+  result,
+  previous,
+  personalBest,
+  isNewBest,
+  modeLabel,
+  duration,
+  onRestart,
+}: StatsProps) {
   return (
-    <div className="stats">
+    <div className="stats" role="status" aria-live="polite">
+      <div className="stats-context">
+        {modeLabel} · {duration}s
+        {isNewBest && <span className="new-best">new personal best!</span>}
+      </div>
+
       <div className="stats-main">
-        <div className="stat">
+        <div className={`stat${isNewBest ? " best" : ""}`}>
           <div className="label">wpm</div>
           <div className="value">{result.wpm}</div>
         </div>
@@ -33,16 +52,23 @@ export default function Stats({ result, previous, onRestart }: StatsProps) {
         <span>
           chars {result.correctChars}/{result.typedChars}
         </span>
-        <span>time {result.seconds}s</span>
         {previous && (
-          <span className="prev-score">
+          <span>
             prev {previous.wpm} wpm · {previous.accuracy}%
           </span>
+        )}
+        {personalBest && !isNewBest && (
+          <span>
+            pb {personalBest.wpm} wpm · {personalBest.accuracy}%
+          </span>
+        )}
+        {isNewBest && personalBest && (
+          <span>old pb {personalBest.wpm} wpm</span>
         )}
       </div>
 
       <div className="actions">
-        <button className="btn" onClick={onRestart} autoFocus>
+        <button className="btn" onClick={onRestart}>
           restart
         </button>
         <span className="hint-key">

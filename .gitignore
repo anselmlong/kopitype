@@ -27,3 +27,4 @@ next-env.d.ts
 
 # vercel
 .vercel
+.gstack/

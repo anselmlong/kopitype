@@ -14,6 +14,8 @@
 import words from "../data/words.json";
 import quotes from "../data/quotes.json";
 import vulgar from "../data/vulgar.json";
+import mrt from "../data/mrt.json";
+import xmm from "../data/xmm.json";
 
 export type ModeType = "words" | "quotes";
 
@@ -42,6 +44,8 @@ export interface ModeDef {
 export const MODES: ModeDef[] = [
   { id: "words", label: "words", type: "words", words: words as string[] },
   { id: "quote", label: "quote", type: "quotes", quotes: quotes as Quote[] },
+  { id: "mrt", label: "mrt", type: "quotes", quotes: mrt as Quote[] },
+  { id: "xmm", label: "xmm", type: "quotes", quotes: xmm as Quote[] },
   {
     id: "vulgar",
     label: "uncensored",
@@ -81,23 +85,33 @@ const WORD_BATCH = 60;
 /**
  * A stream of target words for a test. `next()` yields the next batch:
  *   - words mode:  a fresh shuffle of ~60 tokens
- *   - quote mode:  the words of one random quote
+ *   - quote mode:  the words of one random quote, plus its source attribution
  * The test starts with one batch and appends more via next() as the typist
  * nears the end, so it never runs out before the timer does.
  */
+export interface Batch {
+  words: string[];
+  /** Attribution for quote batches ("kopi order", "mrt gripes", ...). */
+  source?: string;
+}
+
 export interface WordStream {
-  next: () => string[];
+  next: () => Batch;
 }
 
 export function createStream(mode: ModeDef): WordStream {
   if (mode.type === "quotes") {
     const pool = mode.quotes ?? [];
     return {
-      next: () => (pool.length ? pick(pool).text.split(/\s+/) : []),
+      next: () => {
+        if (!pool.length) return { words: [] };
+        const q = pick(pool);
+        return { words: q.text.split(/\s+/), source: q.source };
+      },
     };
   }
   const pool = mode.words ?? [];
   return {
-    next: () => shuffle(pool).slice(0, WORD_BATCH),
+    next: () => ({ words: shuffle(pool).slice(0, WORD_BATCH) }),
   };
 }

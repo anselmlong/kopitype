@@ -18,6 +18,15 @@ import {
   WordStream as Stream,
 } from "@/lib/corpus";
 import { computeResult, TestResult } from "@/lib/wpm";
+import { getPersonalBest, savePersonalBest, PersonalBest } from "@/lib/records";
+import {
+  playTick,
+  playError,
+  playFinish,
+  playPersonalBest,
+  loadSoundPref,
+  saveSoundPref,
+} from "@/lib/sound";
 
 const DURATIONS = [15, 30, 60];
 const DEFAULT_DURATION = 30;
@@ -33,10 +42,20 @@ interface Model {
   buffer: string; // live text for the current word (mirrors the input value)
   correct: number; // correct keystrokes
   total: number; // all keystrokes (for raw wpm + accuracy)
+  sources: { start: number; source: string }[]; // quote attributions by word range
 }
 
 function freshModel(stream: Stream): Model {
-  const words = stream.next();
+  // pull batches until the opening view isn't sparse — short quote batches
+  // (an mrt station is 1-4 words) would otherwise start almost empty
+  const words: string[] = [];
+  const sources: { start: number; source: string }[] = [];
+  for (let i = 0; i < 10 && words.length < EXTEND_WHEN_WITHIN; i++) {
+    const batch = stream.next();
+    if (batch.words.length === 0) break;
+    if (batch.source) sources.push({ start: words.length, source: batch.source });
+    words.push(...batch.words);
+  }
   return {
     words,
     typed: words.map(() => ""),
@@ -44,6 +63,7 @@ function freshModel(stream: Stream): Model {
     buffer: "",
     correct: 0,
     total: 0,
+    sources,
   };
 }
 
@@ -54,11 +74,22 @@ function commonPrefix(a: string, b: string): number {
   return i;
 }
 
+/** Attribution for the quote the typist is currently inside, if any. */
+function currentSource(m: Model): string | null {
+  let src: string | null = null;
+  for (const s of m.sources) {
+    if (s.start > m.idx) break;
+    src = s.source;
+  }
+  return src;
+}
+
 export default function TypingTest() {
   const [modeId, setModeId] = useState(DEFAULT_MODE_ID);
   const [duration, setDuration] = useState(DEFAULT_DURATION);
   const [uncensored, setUncensored] = useState(false);
   const [confirmVulgar, setConfirmVulgar] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
@@ -68,6 +99,8 @@ export default function TypingTest() {
 
   const [result, setResult] = useState<TestResult | null>(null);
   const [prevResult, setPrevResult] = useState<TestResult | null>(null);
+  const [personalBest, setPersonalBest] = useState<PersonalBest | null>(null);
+  const [isNewBest, setIsNewBest] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const modelRef = useRef<Model | null>(null);
@@ -76,12 +109,23 @@ export default function TypingTest() {
   const startRef = useRef<number>(0);
   const phaseRef = useRef<Phase>("idle");
   const durationRef = useRef<number>(DEFAULT_DURATION);
+  const modeIdRef = useRef<string>(DEFAULT_MODE_ID);
+  const soundRef = useRef<boolean>(true);
+  // survives reset() (which nulls `result`), so "prev" still shows next run
+  const lastResultRef = useRef<TestResult | null>(null);
 
   phaseRef.current = phase;
   durationRef.current = duration;
+  modeIdRef.current = modeId;
+  soundRef.current = soundOn;
 
   const mode = useMemo(() => getMode(modeId), [modeId]);
   const modes = useMemo(() => visibleModes(uncensored), [uncensored]);
+
+  // sound preference lives in localStorage; read after mount to keep SSR stable
+  useEffect(() => {
+    setSoundOn(loadSoundPref());
+  }, []);
 
   // (Re)build the test whenever mode or duration changes.
   const reset = useCallback(() => {
@@ -93,6 +137,7 @@ export default function TypingTest() {
     setPhase("idle");
     setTimeLeft(duration);
     setResult(null);
+    setIsNewBest(false);
     rerender();
   }, [modeId, duration, rerender]);
 
@@ -108,12 +153,28 @@ export default function TypingTest() {
     const res = m
       ? computeResult(m.correct, m.total, secs)
       : computeResult(0, 0, secs);
-    // whatever was on screen before becomes the "previous" score
-    setPrevResult(result);
+
+    // personal best bookkeeping (per mode + duration)
+    const pb = getPersonalBest(modeIdRef.current, secs);
+    const beatIt = res.wpm > 0 && (!pb || res.wpm > pb.wpm);
+    if (beatIt) {
+      savePersonalBest(modeIdRef.current, secs, {
+        wpm: res.wpm,
+        accuracy: res.accuracy,
+        ts: Date.now(),
+      });
+    }
+    setPersonalBest(pb);
+    setIsNewBest(beatIt);
+    if (soundRef.current) (beatIt ? playPersonalBest : playFinish)();
+
+    // the last finished test becomes the "previous" score
+    setPrevResult(lastResultRef.current);
+    lastResultRef.current = res;
     setResult(res);
     setPhase("finished");
     inputRef.current?.blur();
-  }, [result]);
+  }, []);
 
   const startTimer = useCallback(() => {
     startRef.current = Date.now();
@@ -129,9 +190,13 @@ export default function TypingTest() {
   /** Append more target words so the typist never runs out before time. */
   const maybeExtend = useCallback((m: Model) => {
     if (m.idx < m.words.length - EXTEND_WHEN_WITHIN) return;
-    const more = streamRef.current?.next() ?? [];
-    m.words = [...m.words, ...more];
-    m.typed = [...m.typed, ...more.map(() => "")];
+    const batch = streamRef.current?.next();
+    if (!batch) return;
+    if (batch.source) {
+      m.sources = [...m.sources, { start: m.words.length, source: batch.source }];
+    }
+    m.words = [...m.words, ...batch.words];
+    m.typed = [...m.typed, ...batch.words.map(() => "")];
   }, []);
 
   const tally = useCallback(
@@ -154,7 +219,11 @@ export default function TypingTest() {
       if (!m || phaseRef.current === "finished") return;
 
       let value = e.target.value;
-      if (phaseRef.current === "idle" && value.length > 0) startTimer();
+      // a stray space shouldn't arm the timer — only a real character starts
+      if (phaseRef.current === "idle" && value.trim().length > 0) startTimer();
+
+      const beforeCorrect = m.correct;
+      const beforeTotal = m.total;
 
       if (value.includes(" ")) {
         const idx = value.indexOf(" ");
@@ -173,10 +242,11 @@ export default function TypingTest() {
           return;
         }
 
-        // commit the word and advance
+        // commit the word and advance; the separating space is only a
+        // correct keystroke when the committed word actually matched
         m.typed[m.idx] = committed;
         m.total++;
-        m.correct++; // the separating space always counts as correct
+        if (committed === (m.words[m.idx] ?? "")) m.correct++;
         m.idx++;
         maybeExtend(m);
 
@@ -187,18 +257,41 @@ export default function TypingTest() {
           tally(m, 0, remainder, m.words[m.idx] ?? "");
         }
         e.target.value = remainder;
-        rerender();
-        return;
+      } else {
+        // no space: normal typing / backspace within the current word
+        const cp = commonPrefix(m.buffer, value);
+        tally(m, cp, value, m.words[m.idx] ?? "");
+        m.buffer = value;
+        m.typed[m.idx] = value;
       }
 
-      // no space: normal typing / backspace within the current word
-      const cp = commonPrefix(m.buffer, value);
-      tally(m, cp, value, m.words[m.idx] ?? "");
-      m.buffer = value;
-      m.typed[m.idx] = value;
+      // one quiet cue per input event: tick if everything new was right
+      const added = m.total - beforeTotal;
+      if (soundRef.current && added > 0) {
+        (m.correct - beforeCorrect === added ? playTick : playError)();
+      }
       rerender();
     },
     [startTimer, tally, maybeExtend, rerender]
+  );
+
+  // Monkeytype rule: backspace crosses the word boundary only when the
+  // previous word was committed with an error; correct words are locked.
+  // Handled on keydown because onChange never fires for an empty input.
+  const onInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== "Backspace") return;
+      const m = modelRef.current;
+      if (!m || phaseRef.current === "finished") return;
+      if (m.buffer.length > 0 || m.idx === 0) return;
+      const prev = m.idx - 1;
+      if (m.typed[prev] === m.words[prev]) return;
+      e.preventDefault();
+      m.idx = prev;
+      m.buffer = m.typed[prev];
+      rerender();
+    },
+    [rerender]
   );
 
   const restart = useCallback(() => {
@@ -207,19 +300,43 @@ export default function TypingTest() {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [reset]);
 
-  // Global keys: Tab always restarts (single keybind, monkeytype-style).
+  // Global keys, kept polite for keyboard navigation:
+  //  - plain Tab restarts only while typing (input focused) or on the results
+  //    screen; Shift+Tab is never hijacked, so you can always tab backwards
+  //  - Escape blurs the input (freeing Tab for navigation) and closes dialogs
+  //  - any printable key while unfocused starts by focusing the input
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
+      const inputFocused = document.activeElement === inputRef.current;
+      if (e.key === "Tab" && !e.shiftKey) {
+        if (inputFocused || phaseRef.current === "finished") {
+          e.preventDefault();
+          restart();
+        }
+        return;
+      }
+      if (e.key === "Escape") {
+        setConfirmVulgar(false);
+        if (inputFocused) inputRef.current?.blur();
+        return;
+      }
+      // results screen: Enter also restarts, but never steals from a
+      // focused element (e.g. the github link or the restart button itself)
+      if (
+        e.key === "Enter" &&
+        phaseRef.current === "finished" &&
+        document.activeElement === document.body
+      ) {
         restart();
         return;
       }
-      // pressing any key while idle & unfocused starts by focusing the input
       if (
         phaseRef.current !== "finished" &&
-        document.activeElement !== inputRef.current &&
-        e.key.length === 1
+        !inputFocused &&
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
       ) {
         inputRef.current?.focus();
       }
@@ -234,17 +351,25 @@ export default function TypingTest() {
     };
   }, []);
 
+  /** Options were clicked with the mouse; hand focus straight back to typing. */
+  const refocus = useCallback(() => {
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
+
   const handleMode = (id: string) => {
     setModeId(id);
+    refocus();
   };
   const handleDuration = (d: number) => {
     setDuration(d);
+    refocus();
   };
   const handleToggleUncensored = () => {
     if (uncensored) {
       setUncensored(false);
       // if we were in the gated mode, drop back to the default
       if (getMode(modeId).gated) setModeId(DEFAULT_MODE_ID);
+      refocus();
     } else {
       setConfirmVulgar(true);
     }
@@ -252,78 +377,114 @@ export default function TypingTest() {
   const confirmUncensored = () => {
     setUncensored(true);
     setConfirmVulgar(false);
+    // you asked for it — go straight to the mode you just unlocked
+    setModeId("vulgar");
+    refocus();
+  };
+  const handleToggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    saveSoundPref(next);
+    refocus();
   };
 
   const m = modelRef.current;
   const showHint = !focused && phase !== "finished";
+  const source = mode.type === "quotes" && m ? currentSource(m) : null;
 
   return (
     <div className="test">
-      <ModeBar
-        modes={modes}
-        activeMode={modeId}
-        onMode={handleMode}
-        durations={DURATIONS}
-        activeDuration={duration}
-        onDuration={handleDuration}
-        uncensored={uncensored}
-        onToggleUncensored={handleToggleUncensored}
-      />
+      <div className="modebar-wrap">
+        <ModeBar
+          modes={modes}
+          activeMode={modeId}
+          onMode={handleMode}
+          durations={DURATIONS}
+          activeDuration={duration}
+          onDuration={handleDuration}
+          uncensored={uncensored}
+          onToggleUncensored={handleToggleUncensored}
+          soundOn={soundOn}
+          onToggleSound={handleToggleSound}
+        />
+        {confirmVulgar && (
+          <div className="confirm" role="alertdialog" aria-label="uncensored mode warning">
+            <span className="warn">you asked for it ah —</span>
+            <span>uncensored mode has real hokkien vulgarities.</span>
+            <button className="btn" onClick={confirmUncensored} autoFocus>
+              onz lah
+            </button>
+            <button className="btn" onClick={() => setConfirmVulgar(false)}>
+              nvm
+            </button>
+          </div>
+        )}
+      </div>
 
-      {confirmVulgar && (
-        <div className="confirm" role="alertdialog">
-          <span className="warn">you asked for it ah —</span>
-          <span>uncensored mode has real hokkien vulgarities.</span>
-          <button className="btn" onClick={confirmUncensored}>
-            on lah
-          </button>
-          <button className="btn" onClick={() => setConfirmVulgar(false)}>
-            nvm
-          </button>
-        </div>
-      )}
+      <div className="test-center">
+        {phase !== "finished" && (
+          <div className="timer" aria-live="off">
+            {phase === "running" ? Math.ceil(timeLeft) : " "}
+          </div>
+        )}
 
-      {phase !== "finished" && (
-        <div className="timer" aria-live="off">
-          {phase === "running" ? Math.ceil(timeLeft) : duration}
-        </div>
-      )}
-
-      {phase === "finished" && result ? (
-        <Stats result={result} previous={prevResult} onRestart={restart} />
-      ) : (
-        <div
-          className="test-area"
-          onClick={() => inputRef.current?.focus()}
-        >
-          <input
-            ref={inputRef}
-            className="capture"
-            type="text"
-            value={m?.buffer ?? ""}
-            onChange={onInputChange}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            aria-label="typing input"
+        {phase === "finished" && result ? (
+          <Stats
+            result={result}
+            previous={prevResult}
+            personalBest={personalBest}
+            isNewBest={isNewBest}
+            modeLabel={mode.label}
+            duration={duration}
+            onRestart={restart}
           />
-          <WordStream
-            words={m?.words ?? []}
-            typed={m?.typed ?? []}
-            wordIndex={m?.idx ?? 0}
-            blurred={showHint}
-            typing={phase === "running"}
-          />
-          {showHint && (
-            <div className="focus-hint">
-              click here or press any key to start
-            </div>
-          )}
-        </div>
-      )}
+        ) : (
+          <div
+            className="test-area"
+            onClick={() => inputRef.current?.focus()}
+          >
+            <input
+              ref={inputRef}
+              className="capture"
+              type="text"
+              value={m?.buffer ?? ""}
+              onChange={onInputChange}
+              onKeyDown={onInputKeyDown}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              aria-label="typing input"
+            />
+            <WordStream
+              words={m?.words ?? []}
+              typed={m?.typed ?? []}
+              wordIndex={m?.idx ?? 0}
+              blurred={showHint}
+              typing={phase === "running"}
+            />
+            {source && <div className="quote-source">— {source}</div>}
+            {showHint && (
+              <div className="focus-hint">
+                <span className="hint-pointer">
+                  click here or press any key to start
+                </span>
+                <span className="hint-touch">tap here to start lah</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {phase !== "finished" && (
+          <div className="retry">
+            <button onClick={restart} aria-label="restart test">
+              restart
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

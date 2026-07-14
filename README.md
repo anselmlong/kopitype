@@ -8,6 +8,8 @@ Live modes:
 
 - **words** — single Singlish tokens (`lah`, `shiok`, `kopi`, `laksa`, …)
 - **quote** — full Singlish phrases (kopi orders, hawker orders, mrt gripes, army life)
+- **mrt** — station names, attributed to their line (`ang mo kio` — north south line)
+- **xmm** — 2000s texting style, vowels optional (`gd nite swt drms` — msn status)
 - **uncensored** — gated Hokkien vulgarities, off by default, behind a one-tap "you asked for it ah" confirm
 
 ## Stack
@@ -45,14 +47,22 @@ state machine: `idle → running → finished`.
 
 - A hidden `<input>` captures typing. Its value **is** the current word's buffer, so it
   works with both physical keyboards and mobile soft keyboards (we read value changes,
-  not keycodes). A space commits the word; backspace only erases within the current word.
+  not keycodes). A space commits the word. Backspace erases within the current word,
+  and — monkeytype-style — crosses back into the previous word only if that word was
+  committed with an error; correctly typed words are locked.
 - The timer starts on the first keystroke, not on load.
 - `components/WordStream.tsx` renders per-character state: `pending` / `correct` /
   `incorrect` / `extra`, with a caret, and scrolls as you descend the lines.
 - `lib/wpm.ts` holds the pure, unit-tested math: `wpm = (correct chars / 5) / minutes`,
   plus raw wpm and accuracy.
-- On timeout the input freezes and `components/Stats.tsx` shows the result. `Tab`
-  (anywhere) or the restart button starts a fresh test.
+- On timeout the input freezes and `components/Stats.tsx` shows the result, your
+  previous score, and your personal best (per mode + duration, in `localStorage` —
+  still no accounts). `Tab` (while typing or on the results screen) or the restart
+  button starts a fresh test; `Shift+Tab` and `Escape` are never hijacked, so
+  keyboard navigation always works.
+- Quiet synthesized keystroke/finish sounds live in `lib/sound.ts` (WebAudio, no
+  audio assets) behind a "sound" toggle that's remembered in `localStorage`.
+- Quote mode shows the attribution of the quote you're typing ("— kopi order").
 
 ## Adding a new mode / corpus
 
@@ -88,6 +98,8 @@ be single words (no spaces); put any multi-word terms in a quotes corpus instead
 |---|---|---|
 | `data/words.json` | ~240 | single lowercase tokens |
 | `data/quotes.json` | 60 | `{ text, source }` phrases |
+| `data/mrt.json` | ~120 | `{ text, source }` station → line |
+| `data/xmm.json` | 32 | `{ text, source }` vowel-less texts |
 | `data/vulgar.json` | 40 | single tokens, gated |
 
 The corpora are hand-written and meant to be human-readable (one entry per line) so they're
@@ -96,4 +108,4 @@ easy to vet and extend.
 ## Out of scope (v1)
 
 Leaderboard, accounts, themes, multiplayer, live wpm graph, custom text, punctuation/numbers
-toggles, i18n.
+toggles, i18n. (Personal bests and sound landed post-v1 — both are local-only, no backend.)
