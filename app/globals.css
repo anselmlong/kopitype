@@ -1,0 +1,328 @@
+:root {
+  /* kopi palette — dark espresso base, cream text, one brown accent */
+  --bg: #17110d;
+  --bg-raised: #211913;
+  --text: #ece0cd; /* correct / typed */
+  --sub: #6d5d4e; /* pending, muted */
+  --sub-dim: #4a3f35;
+  --accent: #c8935f; /* kopi brown — caret, active mode, logo dot */
+  --accent-soft: #8a6b4f;
+  --error: #cf6b5d; /* wrong char */
+  --error-bg: #3a201c; /* extra char background */
+  --font-mono: "SFMono-Regular", "JetBrains Mono", "Fira Code", ui-monospace,
+    "Menlo", "Consolas", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+.app {
+  max-width: 1000px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ---- header ---- */
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+.logo {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.logo .dot {
+  color: var(--accent);
+}
+.tagline {
+  color: var(--sub);
+  font-size: 0.85rem;
+}
+
+/* ---- mode bar ---- */
+.modebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  background: var(--bg-raised);
+  border-radius: 0.6rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--sub);
+  user-select: none;
+}
+.modebar .group {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.modebar .divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--sub-dim);
+}
+.modebar button {
+  background: none;
+  border: none;
+  color: var(--sub);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0.1rem 0.2rem;
+  transition: color 0.12s ease;
+}
+.modebar button:hover {
+  color: var(--text);
+}
+.modebar button.active {
+  color: var(--accent);
+}
+.modebar .uncensored.on {
+  color: var(--error);
+}
+
+/* ---- typing area ---- */
+.test-area {
+  position: relative;
+  cursor: text;
+  min-height: 9rem;
+}
+
+.wordstream {
+  position: relative;
+  height: 8.4rem; /* ~3 lines */
+  overflow: hidden;
+  font-size: 1.5rem;
+  line-height: 2.8rem;
+  transition: filter 0.2s ease;
+}
+.wordstream.blurred {
+  filter: blur(4px);
+  opacity: 0.55;
+}
+.wordstream-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  transition: transform 0.15s ease;
+}
+.word {
+  margin-right: 0.65rem;
+  white-space: nowrap;
+  color: var(--sub);
+}
+.char.correct {
+  color: var(--text);
+}
+.char.incorrect {
+  color: var(--error);
+}
+.char.pending {
+  color: var(--sub);
+}
+.char.extra {
+  color: var(--error);
+  background: var(--error-bg);
+}
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.5rem;
+  background: var(--accent);
+  margin: 0 -1px;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  animation: blink 1s steps(1) infinite;
+}
+.wordstream.typing .caret {
+  animation: none;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---- focus hint ---- */
+.focus-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sub);
+  font-size: 0.95rem;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+/* hidden input that actually captures typing */
+.capture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: none;
+  background: transparent;
+  cursor: text;
+  z-index: 2;
+}
+
+/* ---- timer ---- */
+.timer {
+  color: var(--accent);
+  font-size: 1.5rem;
+  height: 2rem;
+}
+
+/* ---- stats / end screen ---- */
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+.stats-main {
+  display: flex;
+  gap: 2.5rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.stat .label {
+  color: var(--sub);
+  font-size: 0.8rem;
+  text-transform: lowercase;
+}
+.stat .value {
+  color: var(--accent);
+  font-size: 3.2rem;
+  line-height: 1.1;
+  font-weight: 700;
+}
+.stat.small .value {
+  font-size: 1.9rem;
+  color: var(--text);
+}
+.stat .unit {
+  color: var(--sub);
+  font-size: 1rem;
+  margin-left: 0.25rem;
+}
+.stats-sub {
+  display: flex;
+  gap: 2rem;
+  color: var(--sub);
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+.prev-score {
+  color: var(--sub);
+  font-size: 0.85rem;
+}
+
+/* ---- buttons ---- */
+.actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.btn {
+  background: var(--bg-raised);
+  color: var(--text);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+.hint-key {
+  color: var(--sub);
+  font-size: 0.8rem;
+}
+.hint-key kbd {
+  background: var(--bg-raised);
+  border-radius: 0.3rem;
+  padding: 0.05rem 0.4rem;
+  font-family: inherit;
+  color: var(--text);
+}
+
+/* ---- confirm dialog for uncensored ---- */
+.confirm {
+  background: var(--bg-raised);
+  border: 1px solid var(--sub-dim);
+  border-radius: 0.6rem;
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+.confirm .warn {
+  color: var(--error);
+}
+
+/* ---- footer ---- */
+.footer {
+  margin-top: auto;
+  color: var(--sub-dim);
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.footer a {
+  color: var(--sub);
+  text-decoration: none;
+}
+.footer a:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .app {
+    padding: 2rem 1rem;
+  }
+  .wordstream {
+    font-size: 1.25rem;
+    line-height: 2.4rem;
+    height: 7.2rem;
+  }
+  .stat .value {
+    font-size: 2.6rem;
+  }
+}
