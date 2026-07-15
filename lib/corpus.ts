@@ -16,6 +16,7 @@ import quotes from "../data/quotes.json";
 import vulgar from "../data/vulgar.json";
 import mrt from "../data/mrt.json";
 import xmm from "../data/xmm.json";
+import sg from "../data/sg.json";
 
 export type ModeType = "words" | "quotes";
 
@@ -43,6 +44,7 @@ export interface ModeDef {
  */
 export const MODES: ModeDef[] = [
   { id: "words", label: "words", type: "words", words: words as string[] },
+  { id: "sg", label: "sg life", type: "words", words: sg as string[] },
   { id: "quote", label: "quote", type: "quotes", quotes: quotes as Quote[] },
   { id: "mrt", label: "mrt", type: "quotes", quotes: mrt as Quote[] },
   { id: "xmm", label: "xmm", type: "quotes", quotes: xmm as Quote[] },

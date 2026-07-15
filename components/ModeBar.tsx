@@ -13,6 +13,8 @@ interface ModeBarProps {
   onToggleUncensored: () => void;
   soundOn: boolean;
   onToggleSound: () => void;
+  onOpenChallenge: () => void;
+  onOpenSubmit: () => void;
 }
 
 export default function ModeBar({
@@ -26,6 +28,8 @@ export default function ModeBar({
   onToggleUncensored,
   soundOn,
   onToggleSound,
+  onOpenChallenge,
+  onOpenSubmit,
 }: ModeBarProps) {
   return (
     <div className="modebar" role="toolbar" aria-label="test options">
@@ -78,6 +82,17 @@ export default function ModeBar({
       >
         {soundOn ? "sound ✓" : "sound"}
       </button>
+
+      <div className="divider" aria-hidden />
+
+      <div className="group" role="group" aria-label="community">
+        <button onClick={onOpenChallenge} title="set a fixed phrase, share the link">
+          custom
+        </button>
+        <button onClick={onOpenSubmit} title="submit words or quotes to the corpus">
+          submit
+        </button>
+      </div>
     </div>
   );
 }
