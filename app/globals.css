@@ -428,6 +428,292 @@ a:focus-visible {
   color: var(--error);
 }
 
+/* ---- challenge banner (replaces the mode bar during a challenge) ---- */
+.challenge-bar .challenge-label {
+  color: var(--accent);
+}
+.challenge-bar button {
+  background: none;
+  border: none;
+  color: var(--sub);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0.35rem 0.3rem;
+  transition: color 0.12s ease;
+}
+.challenge-bar button:hover {
+  color: var(--text);
+}
+
+/* ---- popover panels (challenge creator, corpus submit) ---- */
+.panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 10;
+  width: min(34rem, 100%);
+  background: var(--bg-raised);
+  border: 1px solid var(--sub-dim);
+  border-radius: 0.6rem;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  animation: confirm-in 0.15s ease-out both;
+}
+.panel-title {
+  color: var(--accent);
+}
+.panel-blurb {
+  color: var(--sub);
+  font-size: 0.85rem;
+}
+.panel-input {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--sub-dim);
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+.panel-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.panel-input::placeholder {
+  color: var(--sub-dim);
+}
+.panel-kind {
+  display: flex;
+  gap: 0.9rem;
+}
+.panel-kind button {
+  background: none;
+  border: none;
+  color: var(--sub);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.2rem 0.3rem;
+}
+.panel-kind button.active {
+  color: var(--accent);
+}
+.panel-link {
+  background: var(--bg);
+  border-radius: 0.4rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.75rem;
+  color: var(--sub);
+  overflow-wrap: anywhere;
+  max-height: 4.2rem;
+  overflow-y: auto;
+}
+.panel-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.panel-actions .btn {
+  text-decoration: none;
+  display: inline-block;
+}
+.btn.quiet {
+  background: none;
+  color: var(--sub);
+}
+.btn.quiet:hover {
+  background: none;
+  color: var(--text);
+}
+.btn.disabled,
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+.panel-fine {
+  color: var(--sub-dim);
+  font-size: 0.75rem;
+}
+
+/* ---- pace-over-time graph on the results screen ---- */
+.pace {
+  max-width: 36rem;
+}
+.pace-head {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+.pace-title {
+  color: var(--sub);
+  font-size: 0.8rem;
+}
+.pace-note {
+  color: var(--sub-dim);
+  font-size: 0.75rem;
+}
+.pace-wrap {
+  position: relative;
+  border-radius: 0.4rem;
+}
+.pace-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.pace-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pace-grid {
+  stroke: var(--bg-raised);
+  stroke-width: 1;
+}
+.pace-tick {
+  fill: var(--sub);
+  font-size: 10px;
+  font-family: inherit;
+}
+.pace-area {
+  fill: rgba(200, 147, 95, 0.08);
+}
+.pace-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.pace-x line {
+  stroke: var(--error);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.pace-end {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+.pace-endlabel {
+  fill: var(--text);
+  font-size: 11px;
+  font-family: inherit;
+}
+.pace-cross {
+  stroke: var(--sub-dim);
+  stroke-width: 1;
+}
+.pace-dot {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+.pace-tip {
+  position: absolute;
+  top: 0.25rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--sub-dim);
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 5;
+}
+.pace-tip-value {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.pace-tip-sub {
+  color: var(--sub);
+  font-size: 0.75rem;
+}
+
+/* ---- glossary recap: the singlish you typed ---- */
+.gloss {
+  max-width: 44rem;
+}
+.gloss-head {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+.gloss-title {
+  color: var(--sub);
+  font-size: 0.8rem;
+}
+.gloss-note {
+  color: var(--sub-dim);
+  font-size: 0.75rem;
+}
+.gloss-words {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  max-height: 9.5rem;
+  overflow-y: auto;
+}
+.gloss-item {
+  position: relative;
+}
+.gloss-chip {
+  display: inline-block;
+  background: var(--bg-raised);
+  color: var(--text);
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.85rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-soft);
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.gloss-chip:hover {
+  color: var(--bg);
+  background: var(--accent);
+}
+.gloss-plain {
+  color: var(--sub-dim);
+  font-size: 0.85rem;
+  padding: 0.1rem 0.15rem;
+}
+.gloss-tip {
+  position: absolute;
+  bottom: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 10;
+  width: max-content;
+  max-width: 17rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--sub-dim);
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+.gloss-item:hover .gloss-tip,
+.gloss-chip:focus-visible + .gloss-tip {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* ---- footer ---- */
 .footer {
   margin-top: auto;
@@ -472,7 +758,11 @@ a:focus-visible {
   }
   .new-best,
   .stat.best .value,
-  .confirm {
+  .confirm,
+  .panel {
     animation: none;
+  }
+  .gloss-tip {
+    transition: none;
   }
 }

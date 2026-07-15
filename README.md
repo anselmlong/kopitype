@@ -7,10 +7,17 @@ accounts, no leaderboard, no backend — just wpm lah.
 Live modes:
 
 - **words** — single Singlish tokens (`lah`, `shiok`, `kopi`, `laksa`, …)
+- **sg life** — everyday Singapore (`paynow`, `paylah`, `bto`, `hdb`, `mlbb`, `paywave`, …)
 - **quote** — full Singlish phrases (kopi orders, hawker orders, mrt gripes, army life)
 - **mrt** — station names, attributed to their line (`ang mo kio` — north south line)
 - **xmm** — 2000s texting style, vowels optional (`gd nite swt drms` — msn status)
 - **uncensored** — gated Hokkien vulgarities, off by default, behind a one-tap "you asked for it ah" confirm
+- **custom** — a fixed phrase you set yourself, shared as a link (see below)
+
+The results screen shows a **pace-over-time graph** (running wpm per second, with an
+× on every second that contained a wrong keystroke) and **the singlish you typed** —
+each word from the run, with a hover tooltip giving its meaning and a click-through
+to its dictionary entry (Wiktionary, or Wikipedia for the institutions).
 
 ## Stack
 
@@ -63,6 +70,30 @@ state machine: `idle → running → finished`.
 - Quiet synthesized keystroke/finish sounds live in `lib/sound.ts` (WebAudio, no
   audio assets) behind a "sound" toggle that's remembered in `localStorage`.
 - Quote mode shows the attribution of the quote you're typing ("— kopi order").
+- While a test runs, the keystroke tallies are snapshotted once a second
+  (`lib/pace.ts`, pure + tested); the results screen renders them as an SVG line
+  chart (`components/PaceChart.tsx` — hover crosshair, keyboard arrows, no chart
+  library).
+- `data/glossary.json` maps terms to short meanings (plus an optional link);
+  `components/GlossaryWords.tsx` turns the words you attempted into hoverable,
+  clickable chips.
+
+## Custom challenges
+
+Click **custom** in the mode bar, type a phrase (up to 300 chars), share the link.
+The phrase travels base64url-encoded in the URL fragment (`#c=…`) — no backend, no
+storage, nothing expires. Opening a challenge link loads a fixed-phrase test that
+ends when the phrase does; the timer counts up and the wpm is computed from elapsed
+time. Challenges don't touch personal bests. `lib/challenge.ts` owns the
+encode/decode (validated + normalized on the way in — never trust a URL).
+
+## Crowdsourcing (curated)
+
+Click **submit** in the mode bar to send in words, quotes, or meanings. With no
+backend, the review queue is the repo itself: the form opens a prefilled GitHub
+issue (labelled `corpus-submission`) containing a ready-to-paste JSON snippet.
+Nothing goes live until a maintainer vets it and commits it into `data/` — 
+crowdsourced input, curated output.
 
 ## Adding a new mode / corpus
 
@@ -92,20 +123,23 @@ That's it — it shows up in the mode bar automatically. Add `gated: true` to hi
 behind the "uncensored" toggle (that's how `vulgar.json` is wired). Word-mode tokens must
 be single words (no spaces); put any multi-word terms in a quotes corpus instead.
 
-### Corpus sizes (v1)
+### Corpus sizes
 
 | File | Entries | Shape |
 |---|---|---|
 | `data/words.json` | ~240 | single lowercase tokens |
-| `data/quotes.json` | 60 | `{ text, source }` phrases |
+| `data/sg.json` | ~97 | single lowercase tokens (everyday SG) |
+| `data/quotes.json` | 72 | `{ text, source }` phrases |
 | `data/mrt.json` | ~120 | `{ text, source }` station → line |
 | `data/xmm.json` | 32 | `{ text, source }` vowel-less texts |
 | `data/vulgar.json` | 40 | single tokens, gated |
+| `data/glossary.json` | ~217 | `term: { meaning, link? }` for the results-screen glossary |
 
 The corpora are hand-written and meant to be human-readable (one entry per line) so they're
-easy to vet and extend.
+easy to vet and extend — which is also how crowdsourced submissions land (see above).
 
 ## Out of scope (v1)
 
-Leaderboard, accounts, themes, multiplayer, live wpm graph, custom text, punctuation/numbers
-toggles, i18n. (Personal bests and sound landed post-v1 — both are local-only, no backend.)
+Leaderboard, accounts, themes, multiplayer, punctuation/numbers toggles, i18n.
+(Personal bests, sound, the pace graph, custom challenges, and the glossary all
+landed post-v1 — every one of them local-only or in-URL, still no backend.)

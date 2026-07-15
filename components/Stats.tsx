@@ -2,6 +2,9 @@
 
 import { TestResult } from "@/lib/wpm";
 import { PersonalBest } from "@/lib/records";
+import { PacePoint } from "@/lib/pace";
+import PaceChart from "./PaceChart";
+import GlossaryWords from "./GlossaryWords";
 
 interface StatsProps {
   result: TestResult;
@@ -11,6 +14,12 @@ interface StatsProps {
   isNewBest: boolean;
   modeLabel: string;
   duration: number;
+  /** True for a shared fixed-phrase challenge (duration is elapsed time). */
+  isChallenge: boolean;
+  /** Per-second pace samples for the graph. */
+  pace: PacePoint[];
+  /** Target words the typist attempted, for the glossary recap. */
+  attempted: string[];
   onRestart: () => void;
 }
 
@@ -21,12 +30,18 @@ export default function Stats({
   isNewBest,
   modeLabel,
   duration,
+  isChallenge,
+  pace,
+  attempted,
   onRestart,
 }: StatsProps) {
+  const seconds = isChallenge
+    ? `${result.seconds.toFixed(1)}s`
+    : `${duration}s`;
   return (
     <div className="stats" role="status" aria-live="polite">
       <div className="stats-context">
-        {modeLabel} · {duration}s
+        {modeLabel} · {seconds}
         {isNewBest && <span className="new-best">new personal best!</span>}
       </div>
 
@@ -47,6 +62,10 @@ export default function Stats({
           <div className="value">{result.rawWpm}</div>
         </div>
       </div>
+
+      <PaceChart points={pace} />
+
+      <GlossaryWords words={attempted} />
 
       <div className="stats-sub">
         <span>

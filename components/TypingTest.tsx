@@ -10,6 +10,8 @@ import {
 import ModeBar from "./ModeBar";
 import WordStream from "./WordStream";
 import Stats from "./Stats";
+import ChallengePanel from "./ChallengePanel";
+import SubmitPanel from "./SubmitPanel";
 import {
   DEFAULT_MODE_ID,
   createStream,
@@ -19,6 +21,8 @@ import {
 } from "@/lib/corpus";
 import { computeResult, TestResult } from "@/lib/wpm";
 import { getPersonalBest, savePersonalBest, PersonalBest } from "@/lib/records";
+import { Challenge, challengeFromHash } from "@/lib/challenge";
+import { PacePoint, PaceSample, paceSeries } from "@/lib/pace";
 import {
   playTick,
   playError,
@@ -33,6 +37,7 @@ const DEFAULT_DURATION = 30;
 const EXTEND_WHEN_WITHIN = 12; // append more words when this close to the end
 
 type Phase = "idle" | "running" | "finished";
+type Panel = "none" | "challenge" | "submit";
 
 /** Mutable model driven by keystrokes; kept in a ref to avoid stale closures. */
 interface Model {
@@ -67,6 +72,26 @@ function freshModel(stream: Stream): Model {
   };
 }
 
+/** A challenge is one fixed phrase: a single-batch model, nothing appended. */
+function challengeModel(c: Challenge): Model {
+  const words = c.text.split(/\s+/);
+  return {
+    words,
+    typed: words.map(() => ""),
+    idx: 0,
+    buffer: "",
+    correct: 0,
+    total: 0,
+    sources: [{ start: 0, source: c.by ? `challenge by ${c.by}` : "custom challenge" }],
+  };
+}
+
+/** The whole phrase has been typed (last word committed, or fully entered). */
+function challengeDone(m: Model): boolean {
+  if (m.idx >= m.words.length) return true;
+  return m.idx === m.words.length - 1 && m.buffer === m.words[m.idx];
+}
+
 function commonPrefix(a: string, b: string): number {
   const n = Math.min(a.length, b.length);
   let i = 0;
@@ -90,6 +115,8 @@ export default function TypingTest() {
   const [uncensored, setUncensored] = useState(false);
   const [confirmVulgar, setConfirmVulgar] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  const [panel, setPanel] = useState<Panel>("none");
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
@@ -101,6 +128,8 @@ export default function TypingTest() {
   const [prevResult, setPrevResult] = useState<TestResult | null>(null);
   const [personalBest, setPersonalBest] = useState<PersonalBest | null>(null);
   const [isNewBest, setIsNewBest] = useState(false);
+  const [pace, setPace] = useState<PacePoint[]>([]);
+  const [attempted, setAttempted] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const modelRef = useRef<Model | null>(null);
@@ -111,6 +140,10 @@ export default function TypingTest() {
   const durationRef = useRef<number>(DEFAULT_DURATION);
   const modeIdRef = useRef<string>(DEFAULT_MODE_ID);
   const soundRef = useRef<boolean>(true);
+  const challengeRef = useRef<Challenge | null>(null);
+  // per-second tallies for the pace-over-time graph
+  const samplesRef = useRef<PaceSample[]>([]);
+  const lastSampleSecRef = useRef<number>(0);
   // survives reset() (which nulls `result`), so "prev" still shows next run
   const lastResultRef = useRef<TestResult | null>(null);
 
@@ -118,6 +151,9 @@ export default function TypingTest() {
   durationRef.current = duration;
   modeIdRef.current = modeId;
   soundRef.current = soundOn;
+  challengeRef.current = challenge;
+  const panelRef = useRef<Panel>("none");
+  panelRef.current = panel;
 
   const mode = useMemo(() => getMode(modeId), [modeId]);
   const modes = useMemo(() => visibleModes(uncensored), [uncensored]);
@@ -127,19 +163,40 @@ export default function TypingTest() {
     setSoundOn(loadSoundPref());
   }, []);
 
-  // (Re)build the test whenever mode or duration changes.
+  // Challenge links arrive in the URL fragment (#c=...): read it on mount and
+  // whenever the hash changes (someone pastes a new link, or "try it now").
+  useEffect(() => {
+    const readHash = () => {
+      const c = challengeFromHash(window.location.hash);
+      setChallenge(c);
+      if (c) setPanel("none"); // an arriving challenge takes the stage
+    };
+    readHash();
+    window.addEventListener("hashchange", readHash);
+    return () => window.removeEventListener("hashchange", readHash);
+  }, []);
+
+  // (Re)build the test whenever mode, duration, or the active challenge changes.
   const reset = useCallback(() => {
-    const stream = createStream(getMode(modeId));
-    streamRef.current = stream;
-    modelRef.current = freshModel(stream);
+    if (challenge) {
+      // fixed phrase: one batch, nothing appended, timer counts up
+      streamRef.current = { next: () => ({ words: [] }) };
+      modelRef.current = challengeModel(challenge);
+    } else {
+      const stream = createStream(getMode(modeId));
+      streamRef.current = stream;
+      modelRef.current = freshModel(stream);
+    }
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
+    samplesRef.current = [];
+    lastSampleSecRef.current = 0;
     setPhase("idle");
-    setTimeLeft(duration);
+    setTimeLeft(challenge ? 0 : duration);
     setResult(null);
     setIsNewBest(false);
     rerender();
-  }, [modeId, duration, rerender]);
+  }, [modeId, duration, challenge, rerender]);
 
   useEffect(() => {
     reset();
@@ -149,14 +206,31 @@ export default function TypingTest() {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     const m = modelRef.current;
-    const secs = durationRef.current;
+    const isChallenge = challengeRef.current !== null;
+    // a challenge runs until the phrase is done, so its "duration" is elapsed
+    const secs = isChallenge
+      ? Math.max((Date.now() - startRef.current) / 1000, 0.1)
+      : durationRef.current;
     const res = m
       ? computeResult(m.correct, m.total, secs)
       : computeResult(0, 0, secs);
 
-    // personal best bookkeeping (per mode + duration)
-    const pb = getPersonalBest(modeIdRef.current, secs);
-    const beatIt = res.wpm > 0 && (!pb || res.wpm > pb.wpm);
+    // close the pace series with an exact-final sample, then bake the graph
+    if (m) {
+      samplesRef.current = [
+        ...samplesRef.current,
+        { t: secs, correct: m.correct, total: m.total },
+      ];
+    }
+    setPace(paceSeries(samplesRef.current));
+    setAttempted(
+      m ? m.words.slice(0, m.idx + (m.buffer.length > 0 ? 1 : 0)) : []
+    );
+
+    // personal best bookkeeping (per mode + duration; challenges don't count)
+    const pb = isChallenge ? null : getPersonalBest(modeIdRef.current, secs);
+    const beatIt =
+      !isChallenge && res.wpm > 0 && (!pb || res.wpm > pb.wpm);
     if (beatIt) {
       savePersonalBest(modeIdRef.current, secs, {
         wpm: res.wpm,
@@ -181,6 +255,23 @@ export default function TypingTest() {
     setPhase("running");
     timerRef.current = setInterval(() => {
       const elapsed = (Date.now() - startRef.current) / 1000;
+
+      // snapshot the tallies once a second for the pace graph
+      const sec = Math.floor(elapsed);
+      const m = modelRef.current;
+      if (m && sec > lastSampleSecRef.current) {
+        lastSampleSecRef.current = sec;
+        samplesRef.current = [
+          ...samplesRef.current,
+          { t: sec, correct: m.correct, total: m.total },
+        ];
+      }
+
+      if (challengeRef.current) {
+        // challenges count up and end when the phrase does, not on a timer
+        setTimeLeft(elapsed);
+        return;
+      }
       const left = Math.max(0, durationRef.current - elapsed);
       setTimeLeft(left);
       if (left <= 0) finish();
@@ -270,9 +361,16 @@ export default function TypingTest() {
       if (soundRef.current && added > 0) {
         (m.correct - beforeCorrect === added ? playTick : playError)();
       }
+
+      // a challenge ends when the phrase does
+      if (challengeRef.current && challengeDone(m)) {
+        rerender();
+        finish();
+        return;
+      }
       rerender();
     },
-    [startTimer, tally, maybeExtend, rerender]
+    [startTimer, tally, maybeExtend, rerender, finish]
   );
 
   // Monkeytype rule: backspace crosses the word boundary only when the
@@ -308,8 +406,19 @@ export default function TypingTest() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const inputFocused = document.activeElement === inputRef.current;
+      // typing inside a panel form (challenge/submit) must never be hijacked
+      const active = document.activeElement;
+      const inPanelField =
+        active instanceof HTMLElement &&
+        active !== inputRef.current &&
+        (active.tagName === "TEXTAREA" ||
+          active.tagName === "INPUT" ||
+          active.isContentEditable);
       if (e.key === "Tab" && !e.shiftKey) {
-        if (inputFocused || phaseRef.current === "finished") {
+        if (
+          (inputFocused || phaseRef.current === "finished") &&
+          panelRef.current === "none"
+        ) {
           e.preventDefault();
           restart();
         }
@@ -317,6 +426,7 @@ export default function TypingTest() {
       }
       if (e.key === "Escape") {
         setConfirmVulgar(false);
+        setPanel("none");
         if (inputFocused) inputRef.current?.blur();
         return;
       }
@@ -333,6 +443,8 @@ export default function TypingTest() {
       if (
         phaseRef.current !== "finished" &&
         !inputFocused &&
+        !inPanelField &&
+        panelRef.current === "none" &&
         e.key.length === 1 &&
         !e.ctrlKey &&
         !e.metaKey &&
@@ -387,26 +499,59 @@ export default function TypingTest() {
     saveSoundPref(next);
     refocus();
   };
+  const togglePanel = (which: Panel) => {
+    setConfirmVulgar(false);
+    setPanel((p) => (p === which ? "none" : which));
+  };
+  /** "try it now" in the creator: load the challenge in this tab. */
+  const tryChallenge = (encoded: string) => {
+    setPanel("none");
+    window.location.hash = `c=${encoded}`; // hashchange listener does the rest
+    refocus();
+  };
+  const exitChallenge = () => {
+    // drop the fragment without adding a history entry, then leave challenge mode
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    setChallenge(null);
+    refocus();
+  };
 
   const m = modelRef.current;
   const showHint = !focused && phase !== "finished";
-  const source = mode.type === "quotes" && m ? currentSource(m) : null;
+  const source =
+    (challenge || mode.type === "quotes") && m ? currentSource(m) : null;
 
   return (
     <div className="test">
       <div className="modebar-wrap">
-        <ModeBar
-          modes={modes}
-          activeMode={modeId}
-          onMode={handleMode}
-          durations={DURATIONS}
-          activeDuration={duration}
-          onDuration={handleDuration}
-          uncensored={uncensored}
-          onToggleUncensored={handleToggleUncensored}
-          soundOn={soundOn}
-          onToggleSound={handleToggleSound}
-        />
+        {challenge ? (
+          <div className="modebar challenge-bar" role="toolbar" aria-label="challenge">
+            <span className="challenge-label">
+              custom challenge{challenge.by ? ` — set by ${challenge.by}` : ""}
+            </span>
+            <div className="divider" aria-hidden />
+            <button onClick={exitChallenge}>exit challenge</button>
+          </div>
+        ) : (
+          <ModeBar
+            modes={modes}
+            activeMode={modeId}
+            onMode={handleMode}
+            durations={DURATIONS}
+            activeDuration={duration}
+            onDuration={handleDuration}
+            uncensored={uncensored}
+            onToggleUncensored={handleToggleUncensored}
+            soundOn={soundOn}
+            onToggleSound={handleToggleSound}
+            onOpenChallenge={() => togglePanel("challenge")}
+            onOpenSubmit={() => togglePanel("submit")}
+          />
+        )}
+        {panel === "challenge" && (
+          <ChallengePanel onClose={() => setPanel("none")} onTry={tryChallenge} />
+        )}
+        {panel === "submit" && <SubmitPanel onClose={() => setPanel("none")} />}
         {confirmVulgar && (
           <div className="confirm" role="alertdialog" aria-label="uncensored mode warning">
             <span className="warn">you asked for it ah —</span>
@@ -424,7 +569,11 @@ export default function TypingTest() {
       <div className="test-center">
         {phase !== "finished" && (
           <div className="timer" aria-live="off">
-            {phase === "running" ? Math.ceil(timeLeft) : " "}
+            {phase === "running"
+              ? challenge
+                ? Math.floor(timeLeft) // counts up until the phrase is done
+                : Math.ceil(timeLeft)
+              : " "}
           </div>
         )}
 
@@ -434,8 +583,11 @@ export default function TypingTest() {
             previous={prevResult}
             personalBest={personalBest}
             isNewBest={isNewBest}
-            modeLabel={mode.label}
+            modeLabel={challenge ? "challenge" : mode.label}
             duration={duration}
+            isChallenge={challenge !== null}
+            pace={pace}
+            attempted={attempted}
             onRestart={restart}
           />
         ) : (
