@@ -39,27 +39,31 @@ export default function Stats({
     ? `${result.seconds.toFixed(1)}s`
     : `${duration}s`;
   return (
-    <div className="stats" role="status" aria-live="polite">
-      <div className="stats-context">
-        {modeLabel} · {seconds}
-        {isNewBest && <span className="new-best">new personal best!</span>}
-      </div>
+    <div className="stats">
+      {/* the live region covers only the headline, so screen readers hear
+          "72 wpm, 96%" on finish — not the whole chart + glossary recap */}
+      <div className="stats-head" role="status" aria-live="polite">
+        <div className="stats-context">
+          {modeLabel} · {seconds}
+          {isNewBest && <span className="new-best">new personal best!</span>}
+        </div>
 
-      <div className="stats-main">
-        <div className={`stat${isNewBest ? " best" : ""}`}>
-          <div className="label">wpm</div>
-          <div className="value">{result.wpm}</div>
-        </div>
-        <div className="stat small">
-          <div className="label">accuracy</div>
-          <div className="value">
-            {result.accuracy}
-            <span className="unit">%</span>
+        <div className="stats-main">
+          <div className={`stat${isNewBest ? " best" : ""}`}>
+            <div className="label">wpm</div>
+            <div className="value">{result.wpm}</div>
           </div>
-        </div>
-        <div className="stat small">
-          <div className="label">raw</div>
-          <div className="value">{result.rawWpm}</div>
+          <div className="stat small">
+            <div className="label">accuracy</div>
+            <div className="value">
+              {result.accuracy}
+              <span className="unit">%</span>
+            </div>
+          </div>
+          <div className="stat small">
+            <div className="label">raw</div>
+            <div className="value">{result.rawWpm}</div>
+          </div>
         </div>
       </div>
 

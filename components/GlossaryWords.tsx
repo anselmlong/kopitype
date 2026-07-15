@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { glossaryLink, lookupGlossary, uniqueWords } from "@/lib/glossary";
 
 interface GlossaryWordsProps {
@@ -14,6 +15,21 @@ interface GlossaryWordsProps {
  * we can't gloss render muted and inert.
  */
 export default function GlossaryWords({ words }: GlossaryWordsProps) {
+  // keep a tooltip on-screen: chips near the right edge would otherwise
+  // clip their meaning off the viewport (visibility:hidden still has a box,
+  // so we can measure before it shows)
+  const clampTip = useCallback(
+    (e: React.SyntheticEvent<HTMLLIElement>) => {
+      const tip = e.currentTarget.querySelector<HTMLElement>(".gloss-tip");
+      if (!tip) return;
+      tip.style.transform = "";
+      const r = tip.getBoundingClientRect();
+      const overflow = r.right - (window.innerWidth - 12);
+      if (overflow > 0) tip.style.transform = `translateX(-${overflow}px)`;
+    },
+    []
+  );
+
   const unique = uniqueWords(words);
   if (unique.length === 0) return null;
   const known = unique.filter((w) => lookupGlossary(w) !== null);
@@ -24,7 +40,10 @@ export default function GlossaryWords({ words }: GlossaryWordsProps) {
         <span className="gloss-title">the singlish you typed</span>
         {known.length > 0 && (
           <span className="gloss-note">
-            hover for the meaning · click to read the entry
+            <span className="hint-pointer">
+              hover for the meaning · click to read the entry
+            </span>
+            <span className="hint-touch">tap a word to read the entry</span>
           </span>
         )}
       </div>
@@ -39,7 +58,12 @@ export default function GlossaryWords({ words }: GlossaryWordsProps) {
             );
           }
           return (
-            <li key={w} className="gloss-item">
+            <li
+              key={w}
+              className="gloss-item"
+              onMouseEnter={clampTip}
+              onFocus={clampTip}
+            >
               <a
                 className="gloss-chip"
                 href={glossaryLink(w, entry)}

@@ -415,10 +415,13 @@ export default function TypingTest() {
           active.tagName === "INPUT" ||
           active.isContentEditable);
       if (e.key === "Tab" && !e.shiftKey) {
-        if (
-          (inputFocused || phaseRef.current === "finished") &&
-          panelRef.current === "none"
-        ) {
+        // restart on Tab while typing, or fresh off a finish (focus on body).
+        // once the typist tabs into the results (pace chart, glossary chips),
+        // Tab goes back to navigating — never trap the keyboard.
+        const freshFinish =
+          phaseRef.current === "finished" &&
+          document.activeElement === document.body;
+        if ((inputFocused || freshFinish) && panelRef.current === "none") {
           e.preventDefault();
           restart();
         }
@@ -483,6 +486,7 @@ export default function TypingTest() {
       if (getMode(modeId).gated) setModeId(DEFAULT_MODE_ID);
       refocus();
     } else {
+      setPanel("none"); // one popover at a time
       setConfirmVulgar(true);
     }
   };

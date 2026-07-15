@@ -60,7 +60,7 @@ export default function ChallengePanel({ onClose, onTry }: ChallengePanelProps) 
         onChange={(e) => setBy(e.target.value)}
       />
       {link && (
-        <div className="panel-link" aria-live="polite">
+        <div className="panel-link">
           <span className="panel-link-url">{link}</span>
         </div>
       )}

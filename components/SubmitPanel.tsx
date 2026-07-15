@@ -27,21 +27,19 @@ export default function SubmitPanel({ onClose }: SubmitPanelProps) {
       <div className="panel-title">submit to the corpus</div>
       <p className="panel-blurb">
         got a word or phrase we missed? send it over — it opens a github issue,
-        gets vetted, then joins the rotation. curated, not chaos.
+        gets vetted, then joins the rotation.
       </p>
-      <div className="panel-kind" role="radiogroup" aria-label="submission type">
+      <div className="panel-kind" role="group" aria-label="submission type">
         <button
           className={kind === "words" ? "active" : ""}
-          role="radio"
-          aria-checked={kind === "words"}
+          aria-pressed={kind === "words"}
           onClick={() => setKind("words")}
         >
           words
         </button>
         <button
           className={kind === "quote" ? "active" : ""}
-          role="radio"
-          aria-checked={kind === "quote"}
+          aria-pressed={kind === "quote"}
           onClick={() => setKind("quote")}
         >
           quote

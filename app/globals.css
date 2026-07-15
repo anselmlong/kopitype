@@ -285,6 +285,12 @@ a:focus-visible {
   flex-direction: column;
   gap: 1.5rem;
 }
+/* headline live-region wrapper keeps the same rhythm as its siblings */
+.stats-head {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 .stats-context {
   color: var(--sub);
   font-size: 0.9rem;
@@ -550,7 +556,8 @@ a:focus-visible {
 }
 .pace-head {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
   align-items: baseline;
   margin-bottom: 0.25rem;
 }
@@ -646,7 +653,8 @@ a:focus-visible {
 }
 .gloss-head {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
   align-items: baseline;
   margin-bottom: 0.4rem;
 }
@@ -663,8 +671,12 @@ a:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.5rem;
-  max-height: 9.5rem;
+  /* ~4 whole chip rows before scrolling, so no row is cut in half */
+  max-height: 8.1rem;
   overflow-y: auto;
+  padding-bottom: 2px; /* keep the last row's underline off the scroll edge */
+  scrollbar-width: thin;
+  scrollbar-color: var(--sub-dim) transparent;
 }
 .gloss-item {
   position: relative;
@@ -695,7 +707,7 @@ a:focus-visible {
   left: 0;
   z-index: 10;
   width: max-content;
-  max-width: 17rem;
+  max-width: min(17rem, calc(100vw - 1.5rem));
   background: var(--bg-raised);
   border: 1px solid var(--sub-dim);
   border-radius: 0.4rem;
@@ -746,6 +758,13 @@ a:focus-visible {
   }
   .modebar {
     gap: 0.25rem 0.9rem;
+  }
+  /* the svg scales down with the screen; keep its text legible */
+  .pace-tick {
+    font-size: 14px;
+  }
+  .pace-endlabel {
+    font-size: 15px;
   }
 }
 
