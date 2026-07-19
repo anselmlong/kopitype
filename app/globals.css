@@ -256,7 +256,9 @@ a:focus-visible {
 /* ---- mid-test retry: quiet, centered, there when you fumble ---- */
 .retry {
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 0.25rem;
 }
 .retry button {
   background: none;
@@ -270,6 +272,13 @@ a:focus-visible {
 }
 .retry button:hover {
   color: var(--text);
+}
+.retry-hint {
+  color: var(--sub-dim);
+  font-size: 0.75rem;
+}
+.retry-hint kbd {
+  color: var(--sub);
 }
 
 /* ---- timer ---- */

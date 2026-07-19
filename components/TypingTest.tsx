@@ -402,18 +402,9 @@ export default function TypingTest() {
   //  - plain Tab restarts only while typing (input focused) or on the results
   //    screen; Shift+Tab is never hijacked, so you can always tab backwards
   //  - Escape blurs the input (freeing Tab for navigation) and closes dialogs
-  //  - any printable key while unfocused starts by focusing the input
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const inputFocused = document.activeElement === inputRef.current;
-      // typing inside a panel form (challenge/submit) must never be hijacked
-      const active = document.activeElement;
-      const inPanelField =
-        active instanceof HTMLElement &&
-        active !== inputRef.current &&
-        (active.tagName === "TEXTAREA" ||
-          active.tagName === "INPUT" ||
-          active.isContentEditable);
       if (e.key === "Tab" && !e.shiftKey) {
         if (
           (inputFocused || phaseRef.current === "finished") &&
@@ -439,18 +430,6 @@ export default function TypingTest() {
       ) {
         restart();
         return;
-      }
-      if (
-        phaseRef.current !== "finished" &&
-        !inputFocused &&
-        !inPanelField &&
-        panelRef.current === "none" &&
-        e.key.length === 1 &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.altKey
-      ) {
-        inputRef.current?.focus();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -621,7 +600,7 @@ export default function TypingTest() {
             {showHint && (
               <div className="focus-hint">
                 <span className="hint-pointer">
-                  click here or press any key to start
+                  click here to start
                 </span>
                 <span className="hint-touch">tap here to start lah</span>
               </div>
@@ -634,6 +613,9 @@ export default function TypingTest() {
             <button onClick={restart} aria-label="restart test">
               restart
             </button>
+            <span className="retry-hint">
+              or press <kbd>Tab</kbd>
+            </span>
           </div>
         )}
       </div>
