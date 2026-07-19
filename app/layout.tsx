@@ -13,7 +13,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "kopitype — singlish typing test",
   description:
-    "a minimal singlish typing test in the style of monkeytype. type lah, get your wpm.",
+    "a minimal singlish typing test in the style of monkeytype. type and get your singlish wpm.",
 };
 
 export default function RootLayout({

@@ -67,7 +67,7 @@ export default function ModeBar({
         className={"uncensored" + (uncensored ? " on" : "")}
         aria-pressed={uncensored}
         onClick={onToggleUncensored}
-        title="hokkien vulgarities. off by default."
+        title="vulgarities. off by default."
       >
         {uncensored ? "uncensored ✓" : "uncensored"}
       </button>

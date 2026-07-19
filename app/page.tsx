@@ -13,7 +13,7 @@ export default function Home() {
       <TypingTest />
 
       <footer className="footer">
-        <span>type until the timer habis. no account, no leaderboard, just wpm.</span>
+        <span>type until the timer stops. get your singlish wpm.</span>
         <a href="https://github.com/anselmlong/kopitype">github</a>
       </footer>
     </main>
