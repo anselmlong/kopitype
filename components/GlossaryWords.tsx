@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import { glossaryLink, lookupGlossary, uniqueWords } from "@/lib/glossary";
 
 interface GlossaryWordsProps {
@@ -14,9 +16,30 @@ interface GlossaryWordsProps {
  * we can't gloss render muted and inert.
  */
 export default function GlossaryWords({ words }: GlossaryWordsProps) {
+  const [tip, setTip] = useState<{
+    word: string;
+    meaning: string;
+    left: number;
+    top: number;
+  } | null>(null);
   const unique = uniqueWords(words);
   if (unique.length === 0) return null;
   const known = unique.filter((w) => lookupGlossary(w) !== null);
+
+  const showTip = (
+    event: React.MouseEvent<HTMLAnchorElement> | React.FocusEvent<HTMLAnchorElement>,
+    word: string,
+    meaning: string
+  ) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const halfWidth = Math.min(136, (window.innerWidth - 24) / 2);
+    setTip({
+      word,
+      meaning,
+      left: Math.max(halfWidth + 12, Math.min(rect.left + rect.width / 2, window.innerWidth - halfWidth - 12)),
+      top: rect.top - 8,
+    });
+  };
 
   return (
     <div className="gloss">
@@ -46,16 +69,30 @@ export default function GlossaryWords({ words }: GlossaryWordsProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`${w}: ${entry.meaning} (opens dictionary entry)`}
+                aria-describedby={tip?.word === w ? "glossary-tooltip" : undefined}
+                onMouseEnter={(event) => showTip(event, w, entry.meaning)}
+                onMouseLeave={() => setTip(null)}
+                onFocus={(event) => showTip(event, w, entry.meaning)}
+                onBlur={() => setTip(null)}
               >
                 {w}
               </a>
-              <span className="gloss-tip" role="tooltip" aria-hidden>
-                {entry.meaning}
-              </span>
             </li>
           );
         })}
       </ul>
+      {tip &&
+        createPortal(
+          <span
+            id="glossary-tooltip"
+            className="gloss-tip visible"
+            role="tooltip"
+            style={{ left: tip.left, top: tip.top }}
+          >
+            {tip.meaning}
+          </span>,
+          document.body
+        )}
     </div>
   );
 }

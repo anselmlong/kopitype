@@ -665,6 +665,24 @@ a:focus-visible {
   gap: 0.4rem 0.5rem;
   max-height: 9.5rem;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sub-dim) var(--bg-raised);
+  scrollbar-gutter: stable;
+}
+.gloss-words::-webkit-scrollbar {
+  width: 0.55rem;
+}
+.gloss-words::-webkit-scrollbar-track {
+  background: var(--bg-raised);
+  border-radius: 999px;
+}
+.gloss-words::-webkit-scrollbar-thumb {
+  background: var(--sub-dim);
+  border: 2px solid var(--bg-raised);
+  border-radius: 999px;
+}
+.gloss-words::-webkit-scrollbar-thumb:hover {
+  background: var(--sub);
 }
 .gloss-item {
   position: relative;
@@ -690,10 +708,8 @@ a:focus-visible {
   padding: 0.1rem 0.15rem;
 }
 .gloss-tip {
-  position: absolute;
-  bottom: calc(100% + 0.4rem);
-  left: 0;
-  z-index: 10;
+  position: fixed;
+  z-index: 100;
   width: max-content;
   max-width: 17rem;
   background: var(--bg-raised);
@@ -705,11 +721,11 @@ a:focus-visible {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   opacity: 0;
   visibility: hidden;
+  transform: translate(-50%, -100%);
   transition: opacity 0.12s ease;
   pointer-events: none;
 }
-.gloss-item:hover .gloss-tip,
-.gloss-chip:focus-visible + .gloss-tip {
+.gloss-tip.visible {
   opacity: 1;
   visibility: visible;
 }
