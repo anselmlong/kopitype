@@ -525,6 +525,7 @@ export default function TypingTest() {
             onOpenChallenge={() => togglePanel("challenge")}
             onOpenSubmit={() => togglePanel("submit")}
             onOpenLeaderboard={() => togglePanel("leaderboard")}
+            openPanel={panel}
           />
         )}
         {panel === "challenge" && (
