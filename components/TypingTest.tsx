@@ -575,6 +575,7 @@ export default function TypingTest() {
             personalBest={personalBest}
             isNewBest={isNewBest}
             modeLabel={challenge ? "challenge" : mode.label}
+            modeId={modeId}
             duration={duration}
             isChallenge={challenge !== null}
             pace={pace}

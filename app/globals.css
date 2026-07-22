@@ -981,3 +981,40 @@ a:focus-visible {
   text-decoration: underline;
   padding: 0;
 }
+
+/* ---- new-best leaderboard prompt (results screen) ---- */
+.lb-best {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--sub-dim);
+  border-radius: 0.5rem;
+  background: rgba(200, 147, 95, 0.05);
+  animation: fadeIn 0.3s ease-out;
+}
+.lb-best-line {
+  color: var(--sub);
+  font-size: 0.9rem;
+}
+.lb-best-line strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+.lb-best.is-done .lb-best-line {
+  color: var(--text);
+}
+.lb-best .btn {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+}
+.lb-best-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.lb-best-form .panel-input {
+  width: 11rem;
+}
