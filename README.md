@@ -8,8 +8,9 @@ client-side without it.
 
 Live modes:
 
-- **english** — single Singlish tokens plus everyday-Singapore words (`lah`, `shiok`, `kopi`, `paynow`, `bto`, `hdb`, …)
-- **phrases** — full Singlish phrases and mrt lines (kopi orders, hawker orders, army life, `ang mo kio` — north south line)
+- **singlish** — single Singlish tokens plus everyday-Singapore words (`lah`, `shiok`, `kopi`, `paynow`, `bto`, `hdb`, …)
+- **phrases** — full Singlish phrases (kopi orders, hawker orders, army life)
+- **mrt** — station names, attributed to their line (`ang mo kio` — north south line)
 - **xmm** — 2000s texting style, vowels optional (`gd nite swt drms` — msn status)
 - **vulgar** — real Hokkien vulgarities; selecting it needs a one-tap "you asked for it ah" confirm
 - **custom** — a fixed phrase you set yourself, shared as a link (see below)

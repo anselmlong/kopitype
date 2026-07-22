@@ -42,23 +42,19 @@ export interface ModeDef {
  *   import kopi from "../data/kopi.json";
  *   { id: "kopi", label: "kopi", type: "words", words: kopi }
  *
- * "english" folds the everyday-singlish tokens (words) and the sg-life set
- * together; "phrases" folds the singlish quotes and the mrt lines together —
- * fewer, broader buckets so the bar stays short.
+ * "singlish" folds the everyday-singlish tokens (words) and the sg-life set
+ * together into one word bucket; the quote-style corpora (phrases, mrt, xmm)
+ * stay separate.
  */
 export const MODES: ModeDef[] = [
   {
-    id: "english",
-    label: "english",
+    id: "singlish",
+    label: "singlish",
     type: "words",
     words: [...(words as string[]), ...(sg as string[])],
   },
-  {
-    id: "phrases",
-    label: "phrases",
-    type: "quotes",
-    quotes: [...(quotes as Quote[]), ...(mrt as Quote[])],
-  },
+  { id: "phrases", label: "phrases", type: "quotes", quotes: quotes as Quote[] },
+  { id: "mrt", label: "mrt", type: "quotes", quotes: mrt as Quote[] },
   { id: "xmm", label: "xmm", type: "quotes", quotes: xmm as Quote[] },
   {
     id: "vulgar",
@@ -69,7 +65,7 @@ export const MODES: ModeDef[] = [
   },
 ];
 
-export const DEFAULT_MODE_ID = "english";
+export const DEFAULT_MODE_ID = "singlish";
 
 export function getMode(id: string): ModeDef {
   return MODES.find((m) => m.id === id) ?? MODES[0];

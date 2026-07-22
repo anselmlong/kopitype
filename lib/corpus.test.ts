@@ -15,8 +15,9 @@ const TYPEABLE = /^[a-z0-9]+( [a-z0-9]+)*$/;
 describe("MODES registry", () => {
   it("contains the expected mode ids", () => {
     const ids = MODES.map((m) => m.id);
-    expect(ids).toContain("english");
+    expect(ids).toContain("singlish");
     expect(ids).toContain("phrases");
+    expect(ids).toContain("mrt");
     expect(ids).toContain("xmm");
     expect(ids).toContain("vulgar");
   });
@@ -46,7 +47,7 @@ describe("MODES registry", () => {
   it("quote modes have non-empty, lowercase, typeable texts with sources", () => {
     const quoteModes = MODES.filter((m) => m.type === "quotes");
     expect(quoteModes.map((m) => m.id)).toEqual(
-      expect.arrayContaining(["phrases", "xmm"])
+      expect.arrayContaining(["phrases", "mrt", "xmm"])
     );
     for (const m of quoteModes) {
       expect(m.quotes, `${m.id} should ship a quotes array`).toBeDefined();
@@ -103,7 +104,7 @@ describe("shuffle", () => {
 
 describe("createStream (words mode)", () => {
   it("caps a batch at 60 tokens from a large pool", () => {
-    const mode = getMode("english");
+    const mode = getMode("singlish");
     const batch = createStream(mode).next();
     expect(batch.words).toHaveLength(60);
     expect(batch.source).toBeUndefined();
@@ -124,7 +125,7 @@ describe("createStream (words mode)", () => {
   });
 
   it("keeps yielding batches on every next() call", () => {
-    const stream = createStream(getMode("english"));
+    const stream = createStream(getMode("singlish"));
     for (let i = 0; i < 5; i++) {
       expect(stream.next().words.length).toBeGreaterThan(0);
     }
@@ -150,7 +151,7 @@ describe("createStream (quotes mode)", () => {
   });
 
   it("always attributes a source for real quote corpora", () => {
-    for (const id of ["phrases", "xmm"]) {
+    for (const id of ["phrases", "mrt", "xmm"]) {
       const stream = createStream(getMode(id));
       for (let i = 0; i < 20; i++) {
         const batch = stream.next();
