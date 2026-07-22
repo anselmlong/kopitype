@@ -220,6 +220,14 @@ a:focus-visible {
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* line icons stand in for the secondary labels on phones; hidden otherwise */
+.mb-icon {
+  display: none;
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+
 /* ---- hardening -------------------------------------------------------- */
 
 /* thumbs need something to hit; 0.2rem of padding is not it */
@@ -236,31 +244,51 @@ a:focus-visible {
   }
 }
 
-/* below the fold of a phone, stack into clean full-width rows instead of
-   letting the tiers' groups sit side by side and wrap into ragged columns */
+/* on a phone: modes + durations stay as text rows (they're names), but the
+   settings + panels collapse to a single compact row of icons — the labels
+   were what made the bar feel cluttered here */
 @media (max-width: 640px) {
   .modebar {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
   }
-  /* each tier is a vertical stack of rows, one row per group */
-  .mb-primary,
-  .mb-secondary {
+  /* primary is a vertical stack of full-width rows (modes, then durations) */
+  .mb-primary {
     flex-direction: column;
     align-items: flex-start;
     width: 100%;
     margin-left: 0;
     gap: 0.5rem;
   }
+  .mb-primary .mb-group {
+    width: 100%;
+    gap: 0.6rem 1rem;
+  }
+  /* secondary is one icon row under a divider */
   .mb-secondary {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
     border-top: 1px solid var(--sub-dim);
     padding-top: 0.5rem;
   }
-  /* a group fills the width and flows its buttons left-to-right, wrapping */
-  .mb-group {
-    width: 100%;
-    gap: 0.6rem 1rem;
+  .mb-secondary .mb-group {
+    gap: 0.4rem;
+  }
+  /* swap each secondary button from label to icon */
+  .mb-secondary .mb-label,
+  .mb-secondary .mb-dot {
+    display: none;
+  }
+  .mb-secondary .mb-icon {
+    display: inline-flex;
+    width: 1.35em;
+    height: 1.35em;
+  }
+  .mb-secondary .mb-btn {
+    padding: 0.35rem 0.55rem;
   }
   /* vertical hairlines make no sense once the rows are stacked */
   .mb-rule {

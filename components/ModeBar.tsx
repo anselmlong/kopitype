@@ -63,6 +63,75 @@ function StateDot({ on }: { on: boolean }) {
   return <span className="mb-dot" aria-hidden>{on ? "●" : "○"}</span>;
 }
 
+/* Compact line icons — shown in place of the labels on phones (see .mb-icon).
+   Monoline, currentColor, so they inherit the button's state colour. */
+const svg = {
+  viewBox: "0 0 16 16",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.4,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  className: "mb-icon",
+  "aria-hidden": true,
+};
+
+/** speaker, with sound waves or a mute cross depending on state */
+function IconSound({ on }: { on: boolean }) {
+  return (
+    <svg {...svg}>
+      <path d="M2 6h2.5L8 3v10L4.5 10H2z" />
+      {on ? (
+        <>
+          <path d="M10.5 6.4a2.4 2.4 0 0 1 0 3.2" />
+          <path d="M12.4 4.6a5 5 0 0 1 0 6.8" />
+        </>
+      ) : (
+        <path d="M11 6.5l3 3M14 6.5l-3 3" />
+      )}
+    </svg>
+  );
+}
+
+/** warning triangle — the vulgarities toggle (goes red when armed) */
+function IconWarn() {
+  return (
+    <svg {...svg}>
+      <path d="M8 2.5l5.7 10.3H2.3z" />
+      <path d="M8 6.6v2.8" />
+      <circle cx="8" cy="11.2" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+/** ascending bars — the leaderboard */
+function IconBoard() {
+  return (
+    <svg {...svg}>
+      <path d="M3 13.5V9M8 13.5V3.5M13 13.5V6.5" />
+    </svg>
+  );
+}
+
+/** a flag — set your own challenge */
+function IconFlag() {
+  return (
+    <svg {...svg}>
+      <path d="M4 14V2.5" />
+      <path d="M4 3.2h7.5L9.7 5.8l1.8 2.6H4" />
+    </svg>
+  );
+}
+
+/** a plus — contribute to the corpus */
+function IconPlus() {
+  return (
+    <svg {...svg}>
+      <path d="M8 3.5v9M3.5 8h9" />
+    </svg>
+  );
+}
+
 export default function ModeBar({
   modes,
   activeMode,
@@ -151,21 +220,25 @@ export default function ModeBar({
             type="button"
             className={`mb-btn mb-toggle mb-uncensored${uncensored ? " is-on" : ""}`}
             aria-pressed={uncensored}
+            aria-label="uncensored"
             onClick={onToggleUncensored}
             title="unlock the hokkien vulgarities. off by default."
           >
             <StateDot on={uncensored} />
-            uncensored
+            <IconWarn />
+            <span className="mb-label">uncensored</span>
           </button>
           <button
             type="button"
             className={`mb-btn mb-toggle${soundOn ? " is-on" : ""}`}
             aria-pressed={soundOn}
+            aria-label="sound"
             onClick={onToggleSound}
             title="quiet keystroke and finish sounds"
           >
             <StateDot on={soundOn} />
-            sound
+            <IconSound on={soundOn} />
+            <span className="mb-label">sound</span>
           </button>
         </div>
 
@@ -177,30 +250,36 @@ export default function ModeBar({
             className={`mb-btn mb-open${openPanel === "leaderboard" ? " is-open" : ""}`}
             aria-haspopup="dialog"
             aria-expanded={openPanel === "leaderboard"}
+            aria-label="leaderboard"
             onClick={onOpenLeaderboard}
             title="fastest runs for this mode and time"
           >
-            leaderboard
+            <IconBoard />
+            <span className="mb-label">leaderboard</span>
           </button>
           <button
             type="button"
             className={`mb-btn mb-open${openPanel === "challenge" ? " is-open" : ""}`}
             aria-haspopup="dialog"
             aria-expanded={openPanel === "challenge"}
+            aria-label="challenge"
             onClick={onOpenChallenge}
             title="set your own phrase and share the link"
           >
-            challenge
+            <IconFlag />
+            <span className="mb-label">challenge</span>
           </button>
           <button
             type="button"
             className={`mb-btn mb-open${openPanel === "submit" ? " is-open" : ""}`}
             aria-haspopup="dialog"
             aria-expanded={openPanel === "submit"}
+            aria-label="contribute"
             onClick={onOpenSubmit}
             title="send in a word or a quote for the corpus"
           >
-            contribute
+            <IconPlus />
+            <span className="mb-label">contribute</span>
           </button>
         </div>
       </div>
