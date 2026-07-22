@@ -50,7 +50,7 @@ export const MODES: ModeDef[] = [
   { id: "xmm", label: "xmm", type: "quotes", quotes: xmm as Quote[] },
   {
     id: "vulgar",
-    label: "uncensored",
+    label: "hokkien",
     type: "words",
     words: vulgar as string[],
     gated: true,
