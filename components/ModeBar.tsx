@@ -12,8 +12,6 @@ interface ModeBarProps {
   durations: number[];
   activeDuration: number;
   onDuration: (d: number) => void;
-  uncensored: boolean;
-  onToggleUncensored: () => void;
   soundOn: boolean;
   onToggleSound: () => void;
   onOpenChallenge: () => void;
@@ -58,9 +56,63 @@ function useRadioKeys<T>(
   );
 }
 
-/** A toggle's state, as a fixed-width glyph — never changes the label's width. */
-function StateDot({ on }: { on: boolean }) {
-  return <span className="mb-dot" aria-hidden>{on ? "●" : "○"}</span>;
+/* Compact line icons — shown in place of the labels on phones (see .mb-icon).
+   Monoline, currentColor, so they inherit the button's state colour.
+   Sound is icon-only everywhere; the rest are icon-only below 640px. */
+const svg = {
+  viewBox: "0 0 16 16",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.4,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  className: "mb-icon",
+  "aria-hidden": true,
+};
+
+/** speaker, with sound waves or a mute cross depending on state */
+function IconSound({ on }: { on: boolean }) {
+  return (
+    <svg {...svg}>
+      <path d="M2 6h2.5L8 3v10L4.5 10H2z" />
+      {on ? (
+        <>
+          <path d="M10.5 6.4a2.4 2.4 0 0 1 0 3.2" />
+          <path d="M12.4 4.6a5 5 0 0 1 0 6.8" />
+        </>
+      ) : (
+        <path d="M11 6.5l3 3M14 6.5l-3 3" />
+      )}
+    </svg>
+  );
+}
+
+/** ascending bars — the leaderboard */
+function IconBoard() {
+  return (
+    <svg {...svg}>
+      <path d="M3 13.5V9M8 13.5V3.5M13 13.5V6.5" />
+    </svg>
+  );
+}
+
+/** a flag — set your own challenge */
+function IconFlag() {
+  return (
+    <svg {...svg}>
+      <path d="M4 14V2.5" />
+      <path d="M4 3.2h7.5L9.7 5.8l1.8 2.6H4" />
+    </svg>
+  );
+}
+
+/** a plus — contribute to the corpus */
+function IconPlus() {
+  return (
+    <svg {...svg}>
+      <path d="M8 3.5v9M3.5 8h9" />
+    </svg>
+  );
 }
 
 export default function ModeBar({
@@ -70,8 +122,6 @@ export default function ModeBar({
   durations,
   activeDuration,
   onDuration,
-  uncensored,
-  onToggleUncensored,
   soundOn,
   onToggleSound,
   onOpenChallenge,
@@ -149,23 +199,13 @@ export default function ModeBar({
         <div className="mb-group" role="group" aria-label="settings">
           <button
             type="button"
-            className={`mb-btn mb-toggle mb-uncensored${uncensored ? " is-on" : ""}`}
-            aria-pressed={uncensored}
-            onClick={onToggleUncensored}
-            title="unlock the hokkien vulgarities. off by default."
-          >
-            <StateDot on={uncensored} />
-            uncensored
-          </button>
-          <button
-            type="button"
-            className={`mb-btn mb-toggle${soundOn ? " is-on" : ""}`}
+            className={`mb-btn mb-toggle mb-iconbtn${soundOn ? " is-on" : ""}`}
             aria-pressed={soundOn}
+            aria-label="sound"
             onClick={onToggleSound}
-            title="quiet keystroke and finish sounds"
+            title={soundOn ? "sound on — click to mute" : "sound off — click to unmute"}
           >
-            <StateDot on={soundOn} />
-            sound
+            <IconSound on={soundOn} />
           </button>
         </div>
 
@@ -177,30 +217,36 @@ export default function ModeBar({
             className={`mb-btn mb-open${openPanel === "leaderboard" ? " is-open" : ""}`}
             aria-haspopup="dialog"
             aria-expanded={openPanel === "leaderboard"}
+            aria-label="leaderboard"
             onClick={onOpenLeaderboard}
             title="fastest runs for this mode and time"
           >
-            leaderboard
+            <IconBoard />
+            <span className="mb-label">leaderboard</span>
           </button>
           <button
             type="button"
             className={`mb-btn mb-open${openPanel === "challenge" ? " is-open" : ""}`}
             aria-haspopup="dialog"
             aria-expanded={openPanel === "challenge"}
+            aria-label="challenge"
             onClick={onOpenChallenge}
             title="set your own phrase and share the link"
           >
-            challenge
+            <IconFlag />
+            <span className="mb-label">challenge</span>
           </button>
           <button
             type="button"
             className={`mb-btn mb-open${openPanel === "submit" ? " is-open" : ""}`}
             aria-haspopup="dialog"
             aria-expanded={openPanel === "submit"}
+            aria-label="contribute"
             onClick={onOpenSubmit}
             title="send in a word or a quote for the corpus"
           >
-            contribute
+            <IconPlus />
+            <span className="mb-label">contribute</span>
           </button>
         </div>
       </div>

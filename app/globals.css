@@ -191,33 +191,27 @@ a:focus-visible {
   opacity: 0.6;
 }
 
-/* right tier: state lives in the dot, never in the label width */
-.mb-dot {
-  font-size: 0.62em;
-  line-height: 1;
-  width: 1em;
-  flex: none;
-  text-align: center;
-  color: var(--sub-dim);
-  transition: color 0.12s ease;
-}
+/* sound is a lone icon in the right tier: cream when on, muted when off */
 .mb-toggle.is-on {
   color: var(--text);
-}
-.mb-toggle.is-on .mb-dot {
-  color: var(--text);
-}
-/* the one exception to the accent rule: uncensored unlocks a corpus,
-   so it earns its own colour — and it's a warning, not a decoration */
-.mb-uncensored.is-on,
-.mb-uncensored.is-on .mb-dot {
-  color: var(--error);
 }
 
 /* a panel button stays lit while its panel is open */
 .mb-open.is-open {
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
+}
+
+/* line icons stand in for the secondary labels on phones; hidden otherwise */
+.mb-icon {
+  display: none;
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+/* an icon-only button (sound) shows its icon at every width */
+.mb-iconbtn .mb-icon {
+  display: inline-flex;
 }
 
 /* ---- hardening -------------------------------------------------------- */
@@ -236,28 +230,59 @@ a:focus-visible {
   }
 }
 
-/* below the fold of a phone, stack the tiers instead of ragged-wrapping */
+/* on a phone: modes + durations stay as text rows (they're names), but the
+   settings + panels collapse to a single compact row of icons — the labels
+   were what made the bar feel cluttered here */
 @media (max-width: 640px) {
   .modebar {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.35rem;
+    align-items: stretch;
+    gap: 0.5rem;
   }
-  .mb-primary,
+  /* primary is a vertical stack of full-width rows (modes, then durations) */
+  .mb-primary {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    margin-left: 0;
+    gap: 0.5rem;
+  }
+  .mb-primary .mb-group {
+    width: 100%;
+    gap: 0.6rem 1rem;
+  }
+  /* secondary is one icon row under a divider */
   .mb-secondary {
     width: 100%;
     margin-left: 0;
-    gap: 0.75rem;
-  }
-  .mb-secondary {
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
     border-top: 1px solid var(--sub-dim);
-    padding-top: 0.4rem;
+    padding-top: 0.5rem;
+  }
+  .mb-secondary .mb-group {
+    gap: 0.4rem;
+  }
+  /* swap each secondary button from label to icon */
+  .mb-secondary .mb-label {
+    display: none;
+  }
+  .mb-secondary .mb-icon {
+    display: inline-flex;
+    width: 1.35em;
+    height: 1.35em;
+  }
+  .mb-secondary .mb-btn {
+    padding: 0.35rem 0.55rem;
+  }
+  /* vertical hairlines make no sense once the rows are stacked */
+  .mb-rule {
+    display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mb-btn,
-  .mb-dot {
+  .mb-btn {
     transition: none;
   }
 }
@@ -609,7 +634,7 @@ a:focus-visible {
   color: var(--text);
 }
 
-/* ---- confirm popover for uncensored (no layout shift) ---- */
+/* ---- confirm popover for vulgar mode (no layout shift) ---- */
 .modebar-wrap {
   position: relative;
 }

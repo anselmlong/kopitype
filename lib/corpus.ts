@@ -33,7 +33,7 @@ export interface ModeDef {
   words?: string[];
   /** Populated for type === "quotes". */
   quotes?: Quote[];
-  /** If true, hidden from the default mode bar until the "uncensored" toggle. */
+  /** If true, selecting it needs a one-time confirm (real vulgarities inside). */
   gated?: boolean;
 }
 
@@ -41,31 +41,34 @@ export interface ModeDef {
  * The one array that defines every mode. To add "kopi mode" later:
  *   import kopi from "../data/kopi.json";
  *   { id: "kopi", label: "kopi", type: "words", words: kopi }
+ *
+ * "singlish" folds the everyday-singlish tokens (words) and the sg-life set
+ * together into one word bucket; the quote-style corpora (phrases, mrt, xmm)
+ * stay separate.
  */
 export const MODES: ModeDef[] = [
-  { id: "words", label: "words", type: "words", words: words as string[] },
-  { id: "sg", label: "sg life", type: "words", words: sg as string[] },
-  { id: "quote", label: "quote", type: "quotes", quotes: quotes as Quote[] },
+  {
+    id: "singlish",
+    label: "singlish",
+    type: "words",
+    words: [...(words as string[]), ...(sg as string[])],
+  },
+  { id: "phrases", label: "phrases", type: "quotes", quotes: quotes as Quote[] },
   { id: "mrt", label: "mrt", type: "quotes", quotes: mrt as Quote[] },
   { id: "xmm", label: "xmm", type: "quotes", quotes: xmm as Quote[] },
   {
     id: "vulgar",
-    label: "hokkien",
+    label: "vulgar",
     type: "words",
     words: vulgar as string[],
     gated: true,
   },
 ];
 
-export const DEFAULT_MODE_ID = "words";
+export const DEFAULT_MODE_ID = "singlish";
 
 export function getMode(id: string): ModeDef {
   return MODES.find((m) => m.id === id) ?? MODES[0];
-}
-
-/** Modes shown in the bar. Gated modes only appear when uncensored is on. */
-export function visibleModes(uncensored: boolean): ModeDef[] {
-  return MODES.filter((m) => !m.gated || uncensored);
 }
 
 /** Fisher–Yates shuffle, returns a new array. */

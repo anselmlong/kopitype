@@ -16,9 +16,9 @@ import SubmitPanel from "./SubmitPanel";
 import Leaderboard from "./Leaderboard";
 import {
   DEFAULT_MODE_ID,
+  MODES,
   createStream,
   getMode,
-  visibleModes,
   WordStream as Stream,
 } from "@/lib/corpus";
 import { computeResult, TestResult } from "@/lib/wpm";
@@ -114,7 +114,7 @@ function currentSource(m: Model): string | null {
 export default function TypingTest() {
   const [modeId, setModeId] = useState(DEFAULT_MODE_ID);
   const [duration, setDuration] = useState(DEFAULT_DURATION);
-  const [uncensored, setUncensored] = useState(false);
+  const [vulgarOk, setVulgarOk] = useState(false);
   const [confirmVulgar, setConfirmVulgar] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const [panel, setPanel] = useState<Panel>("none");
@@ -156,7 +156,7 @@ export default function TypingTest() {
   panelRef.current = panel;
 
   const mode = useMemo(() => getMode(modeId), [modeId]);
-  const modes = useMemo(() => visibleModes(uncensored), [uncensored]);
+  const modes = MODES;
 
   // sound preference lives in localStorage; read after mount to keep SSR stable
   useEffect(() => {
@@ -448,6 +448,11 @@ export default function TypingTest() {
   }, []);
 
   const handleMode = (id: string) => {
+    // a gated mode (real vulgarities) asks once before it switches in
+    if (getMode(id).gated && !vulgarOk) {
+      setConfirmVulgar(true);
+      return;
+    }
     setModeId(id);
     refocus();
   };
@@ -455,20 +460,10 @@ export default function TypingTest() {
     setDuration(d);
     refocus();
   };
-  const handleToggleUncensored = () => {
-    if (uncensored) {
-      setUncensored(false);
-      // if we were in the gated mode, drop back to the default
-      if (getMode(modeId).gated) setModeId(DEFAULT_MODE_ID);
-      refocus();
-    } else {
-      setConfirmVulgar(true);
-    }
-  };
-  const confirmUncensored = () => {
-    setUncensored(true);
+  const acceptVulgar = () => {
+    setVulgarOk(true);
     setConfirmVulgar(false);
-    // you asked for it — go straight to the mode you just unlocked
+    // you asked for it — switch straight into the mode
     setModeId("vulgar");
     refocus();
   };
@@ -518,8 +513,6 @@ export default function TypingTest() {
             durations={DURATIONS}
             activeDuration={duration}
             onDuration={handleDuration}
-            uncensored={uncensored}
-            onToggleUncensored={handleToggleUncensored}
             soundOn={soundOn}
             onToggleSound={handleToggleSound}
             onOpenChallenge={() => togglePanel("challenge")}
@@ -545,10 +538,10 @@ export default function TypingTest() {
           />
         )}
         {confirmVulgar && (
-          <div className="confirm" role="alertdialog" aria-label="uncensored mode warning">
+          <div className="confirm" role="alertdialog" aria-label="vulgar mode warning">
             <span className="warn">you asked for it ah —</span>
-            <span>uncensored mode has real hokkien vulgarities.</span>
-            <button className="btn" onClick={confirmUncensored} autoFocus>
+            <span>vulgar mode has real hokkien vulgarities.</span>
+            <button className="btn" onClick={acceptVulgar} autoFocus>
               onz lah
             </button>
             <button className="btn" onClick={() => setConfirmVulgar(false)}>

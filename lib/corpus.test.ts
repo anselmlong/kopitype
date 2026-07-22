@@ -3,7 +3,6 @@ import {
   MODES,
   DEFAULT_MODE_ID,
   getMode,
-  visibleModes,
   shuffle,
   createStream,
   ModeDef,
@@ -16,8 +15,8 @@ const TYPEABLE = /^[a-z0-9]+( [a-z0-9]+)*$/;
 describe("MODES registry", () => {
   it("contains the expected mode ids", () => {
     const ids = MODES.map((m) => m.id);
-    expect(ids).toContain("words");
-    expect(ids).toContain("quote");
+    expect(ids).toContain("singlish");
+    expect(ids).toContain("phrases");
     expect(ids).toContain("mrt");
     expect(ids).toContain("xmm");
     expect(ids).toContain("vulgar");
@@ -48,7 +47,7 @@ describe("MODES registry", () => {
   it("quote modes have non-empty, lowercase, typeable texts with sources", () => {
     const quoteModes = MODES.filter((m) => m.type === "quotes");
     expect(quoteModes.map((m) => m.id)).toEqual(
-      expect.arrayContaining(["quote", "mrt", "xmm"])
+      expect.arrayContaining(["phrases", "mrt", "xmm"])
     );
     for (const m of quoteModes) {
       expect(m.quotes, `${m.id} should ship a quotes array`).toBeDefined();
@@ -69,7 +68,7 @@ describe("MODES registry", () => {
 
 describe("getMode", () => {
   it("returns the matching mode by id", () => {
-    expect(getMode("mrt").id).toBe("mrt");
+    expect(getMode("phrases").id).toBe("phrases");
     expect(getMode("vulgar").id).toBe("vulgar");
   });
 
@@ -79,24 +78,6 @@ describe("getMode", () => {
 
   it("resolves the default mode id", () => {
     expect(getMode(DEFAULT_MODE_ID).id).toBe(DEFAULT_MODE_ID);
-  });
-});
-
-describe("visibleModes", () => {
-  it("hides gated modes by default", () => {
-    const visible = visibleModes(false);
-    expect(visible.some((m) => m.gated)).toBe(false);
-    expect(visible.map((m) => m.id)).not.toContain("vulgar");
-  });
-
-  it("shows every mode when uncensored is on", () => {
-    expect(visibleModes(true)).toEqual(MODES);
-  });
-
-  it("keeps registry order for ungated modes", () => {
-    const visibleIds = visibleModes(false).map((m) => m.id);
-    const expected = MODES.filter((m) => !m.gated).map((m) => m.id);
-    expect(visibleIds).toEqual(expected);
   });
 });
 
@@ -123,7 +104,7 @@ describe("shuffle", () => {
 
 describe("createStream (words mode)", () => {
   it("caps a batch at 60 tokens from a large pool", () => {
-    const mode = getMode("words");
+    const mode = getMode("singlish");
     const batch = createStream(mode).next();
     expect(batch.words).toHaveLength(60);
     expect(batch.source).toBeUndefined();
@@ -144,7 +125,7 @@ describe("createStream (words mode)", () => {
   });
 
   it("keeps yielding batches on every next() call", () => {
-    const stream = createStream(getMode("words"));
+    const stream = createStream(getMode("singlish"));
     for (let i = 0; i < 5; i++) {
       expect(stream.next().words.length).toBeGreaterThan(0);
     }
@@ -170,7 +151,7 @@ describe("createStream (quotes mode)", () => {
   });
 
   it("always attributes a source for real quote corpora", () => {
-    for (const id of ["quote", "mrt", "xmm"]) {
+    for (const id of ["phrases", "mrt", "xmm"]) {
       const stream = createStream(getMode(id));
       for (let i = 0; i < 20; i++) {
         const batch = stream.next();
@@ -190,7 +171,7 @@ describe("createStream (quotes mode)", () => {
   });
 
   it("only ever picks quotes from the given pool", () => {
-    const mode = getMode("mrt");
+    const mode = getMode("phrases");
     const texts = new Set(mode.quotes!.map((q) => q.text));
     const stream = createStream(mode);
     for (let i = 0; i < 30; i++) {
