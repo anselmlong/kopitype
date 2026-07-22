@@ -28,3 +28,8 @@ next-env.d.ts
 # vercel
 .vercel
 .gstack/
+
+# leaderboard runtime db (backend state, not source)
+data/leaderboard.db
+leaderboard-api/*.db
+__pycache__/

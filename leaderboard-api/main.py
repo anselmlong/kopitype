@@ -1,17 +1,20 @@
 """Kopitype leaderboard API — lightweight SQLite-backed scoreboard."""
 from __future__ import annotations
 
+import os
 import sqlite3
 import threading
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 
 # --- DB ---
+
+DB_PATH = os.environ.get("KOPITYPE_DB", "/data/leaderboard.db")
 
 _db_init = threading.Lock()
 _db_conn: sqlite3.Connection | None = None
@@ -24,7 +27,7 @@ def get_db() -> sqlite3.Connection:
     with _db_init:
         if _db_conn is not None:
             return _db_conn
-        conn = sqlite3.connect("/data/leaderboard.db", check_same_thread=False)
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS scores (
                 id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -95,15 +98,26 @@ def submit_score(score: ScoreIn) -> dict:
     )
     db.commit()
 
-    # calculate rank
+    # The board ranks players by their *best* run, so rank this submission by
+    # the player's best wpm (which may be an earlier, faster run) among the
+    # per-player bests — not by this one raw insert.
+    best = db.execute(
+        """SELECT MAX(wpm) FROM scores
+           WHERE mode = ? AND duration = ? AND nickname = ?""",
+        (score.mode, score.duration, score.nickname.strip()[:30]),
+    ).fetchone()[0]
+
     rank = db.execute(
-        """SELECT COUNT(*) + 1 FROM scores
-           WHERE mode = ? AND duration = ? AND wpm > ?""",
-        (score.mode, score.duration, score.wpm),
+        """SELECT COUNT(*) + 1 FROM (
+               SELECT MAX(wpm) AS best FROM scores
+               WHERE mode = ? AND duration = ?
+               GROUP BY nickname
+           ) WHERE best > ?""",
+        (score.mode, score.duration, best),
     ).fetchone()[0]
 
     total = db.execute(
-        "SELECT COUNT(*) FROM scores WHERE mode = ? AND duration = ?",
+        "SELECT COUNT(DISTINCT nickname) FROM scores WHERE mode = ? AND duration = ?",
         (score.mode, score.duration),
     ).fetchone()[0]
 
@@ -117,9 +131,13 @@ def get_leaderboard(
     limit: int = Query(20, ge=1, le=100),
 ) -> list[ScoreOut]:
     db = get_db()
+    # One row per player: their best run. SQLite fills the bare accuracy/raw/ts
+    # columns from the same row that holds MAX(wpm) (the "bare column" rule),
+    # so each entry's accuracy matches its best wpm.
     rows = db.execute(
-        """SELECT nickname, wpm, accuracy, raw, ts FROM scores
+        """SELECT nickname, MAX(wpm) AS wpm, accuracy, raw, ts FROM scores
            WHERE mode = ? AND duration = ?
+           GROUP BY nickname
            ORDER BY wpm DESC, ts ASC
            LIMIT ?""",
         (mode, duration, limit),

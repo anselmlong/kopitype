@@ -531,13 +531,15 @@ export default function TypingTest() {
           <ChallengePanel onClose={() => setPanel("none")} onTry={tryChallenge} />
         )}
         {panel === "submit" && <SubmitPanel onClose={() => setPanel("none")} />}
-        {panel === "leaderboard" && result && (
+        {panel === "leaderboard" && (
           <Leaderboard
-            wpm={result.wpm}
-            accuracy={result.accuracy}
-            raw={result.rawWpm}
+            score={
+              result
+                ? { wpm: result.wpm, accuracy: result.accuracy, raw: result.rawWpm }
+                : null
+            }
             mode={challenge ? "challenge" : modeId}
-            duration={challenge ? Math.round(result.seconds) : duration}
+            duration={challenge && result ? Math.round(result.seconds) : duration}
             onClose={() => setPanel("none")}
           />
         )}

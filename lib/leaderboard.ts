@@ -1,6 +1,10 @@
 /** API client for the kopitype leaderboard backend. */
 
-const API = "https://api.kopitype.com";
+// Configurable so local dev (and previews) can point at a local backend.
+// Falls back to the production API when the env var isn't set.
+const API =
+  process.env.NEXT_PUBLIC_LEADERBOARD_API?.replace(/\/$/, "") ||
+  "https://api.kopitype.com";
 
 export interface LeaderboardEntry {
   rank: number;
@@ -17,6 +21,10 @@ export interface SubmitResult {
   total: number;
 }
 
+/**
+ * Fetch the top scores for a mode + duration. Throws on network/HTTP failure
+ * so the caller can tell "the board is empty" apart from "the board is down".
+ */
 export async function fetchLeaderboard(
   mode: string,
   duration: number,
@@ -24,7 +32,7 @@ export async function fetchLeaderboard(
 ): Promise<LeaderboardEntry[]> {
   const params = new URLSearchParams({ mode, duration: String(duration), limit: String(limit) });
   const res = await fetch(`${API}/api/leaderboard?${params}`);
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`leaderboard ${res.status}`);
   return res.json();
 }
 

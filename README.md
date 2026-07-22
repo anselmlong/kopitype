@@ -2,7 +2,9 @@
 
 A Singlish typing test in the style of [monkeytype](https://monkeytype.com). Pick a
 mode and a duration, type the prompt, get your wpm and accuracy. Dark, minimal, no
-accounts, no leaderboard, no backend — just wpm lah.
+accounts — just wpm lah. An optional **global leaderboard** (a small FastAPI +
+SQLite backend) lets you post a nickname and score; the core test still runs fully
+client-side without it.
 
 Live modes:
 
@@ -46,6 +48,27 @@ To preview the exact static output Vercel serves:
 npm run build
 npx serve out    # or: python3 -m http.server -d out 8000
 ```
+
+### Leaderboard (optional)
+
+The leaderboard talks to a separate backend. Point the frontend at it with an env
+var (defaults to the production API when unset):
+
+```bash
+# .env.local
+NEXT_PUBLIC_LEADERBOARD_API=http://localhost:8000
+```
+
+Run the backend locally from `leaderboard-api/`:
+
+```bash
+pip install -r leaderboard-api/requirements.txt
+KOPITYPE_DB=./leaderboard.db uvicorn main:app --port 8000   # from leaderboard-api/
+```
+
+`KOPITYPE_DB` sets the SQLite path (default `/data/leaderboard.db`, meant for a
+mounted volume in the container). The board shows each player's best run per mode +
+duration, so multiple attempts don't crowd it out.
 
 ## How it works
 
@@ -140,6 +163,7 @@ easy to vet and extend — which is also how crowdsourced submissions land (see 
 
 ## Out of scope (v1)
 
-Leaderboard, accounts, themes, multiplayer, punctuation/numbers toggles, i18n.
+Accounts, themes, multiplayer, punctuation/numbers toggles, i18n.
 (Personal bests, sound, the pace graph, custom challenges, and the glossary all
-landed post-v1 — every one of them local-only or in-URL, still no backend.)
+landed post-v1 — local-only or in-URL. The global leaderboard came later and is the
+one piece with a backend; everything else still runs without one.)

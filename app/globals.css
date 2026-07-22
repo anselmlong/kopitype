@@ -175,9 +175,6 @@ a:focus-visible {
   color: var(--sub);
   transition: color 0.08s ease;
 }
-.word.active {
-  position: relative;
-}
 .char {
   display: inline-block; /* reliable metrics for the gliding caret */
 }
@@ -969,4 +966,18 @@ a:focus-visible {
   color: var(--sub-dim);
   text-align: center;
   padding: 1rem !important;
+}
+.lb-error {
+  color: var(--error);
+  font-size: 0.8rem;
+}
+.lb-retry {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
 }
