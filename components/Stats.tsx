@@ -5,6 +5,7 @@ import { PersonalBest } from "@/lib/records";
 import { PacePoint } from "@/lib/pace";
 import PaceChart from "./PaceChart";
 import GlossaryWords from "./GlossaryWords";
+import BestSubmit from "./BestSubmit";
 
 interface StatsProps {
   result: TestResult;
@@ -13,6 +14,8 @@ interface StatsProps {
   personalBest: PersonalBest | null;
   isNewBest: boolean;
   modeLabel: string;
+  /** Mode id (not label) — the key the leaderboard is bucketed by. */
+  modeId: string;
   duration: number;
   /** True for a shared fixed-phrase challenge (duration is elapsed time). */
   isChallenge: boolean;
@@ -29,6 +32,7 @@ export default function Stats({
   personalBest,
   isNewBest,
   modeLabel,
+  modeId,
   duration,
   isChallenge,
   pace,
@@ -94,6 +98,16 @@ export default function Stats({
           <span>old pb {personalBest.wpm} wpm</span>
         )}
       </div>
+
+      {isNewBest && !isChallenge && (
+        <BestSubmit
+          wpm={result.wpm}
+          accuracy={result.accuracy}
+          raw={result.rawWpm}
+          mode={modeId}
+          duration={duration}
+        />
+      )}
 
       <div className="actions">
         <button className="btn" onClick={onRestart}>
