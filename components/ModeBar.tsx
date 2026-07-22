@@ -15,6 +15,7 @@ interface ModeBarProps {
   onToggleSound: () => void;
   onOpenChallenge: () => void;
   onOpenSubmit: () => void;
+  onOpenLeaderboard: () => void;
 }
 
 export default function ModeBar({
@@ -30,6 +31,7 @@ export default function ModeBar({
   onToggleSound,
   onOpenChallenge,
   onOpenSubmit,
+  onOpenLeaderboard,
 }: ModeBarProps) {
   return (
     <div className="modebar" role="toolbar" aria-label="test options">
@@ -91,6 +93,9 @@ export default function ModeBar({
         </button>
         <button onClick={onOpenSubmit} title="submit words or quotes to the corpus">
           submit
+        </button>
+        <button onClick={onOpenLeaderboard} title="global leaderboard">
+          lb
         </button>
       </div>
     </div>

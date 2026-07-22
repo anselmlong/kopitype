@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -12,6 +13,7 @@ import WordStream from "./WordStream";
 import Stats from "./Stats";
 import ChallengePanel from "./ChallengePanel";
 import SubmitPanel from "./SubmitPanel";
+import Leaderboard from "./Leaderboard";
 import {
   DEFAULT_MODE_ID,
   createStream,
@@ -37,7 +39,7 @@ const DEFAULT_DURATION = 30;
 const EXTEND_WHEN_WITHIN = 12; // append more words when this close to the end
 
 type Phase = "idle" | "running" | "finished";
-type Panel = "none" | "challenge" | "submit";
+type Panel = "none" | "challenge" | "submit" | "leaderboard";
 
 /** Mutable model driven by keystrokes; kept in a ref to avoid stale closures. */
 interface Model {
@@ -117,12 +119,10 @@ export default function TypingTest() {
   const [soundOn, setSoundOn] = useState(true);
   const [panel, setPanel] = useState<Panel>("none");
   const [challenge, setChallenge] = useState<Challenge | null>(null);
-
   const [phase, setPhase] = useState<Phase>("idle");
-  const [timeLeft, setTimeLeft] = useState(DEFAULT_DURATION);
+  const [timeLeft, setTimeLeft] = useState(0);
   const [focused, setFocused] = useState(false);
-  const [, forceRender] = useState(0);
-  const rerender = useCallback(() => forceRender((n) => n + 1), []);
+  const [, rerender] = useReducer((x: number) => x + 1, 0);
 
   const [result, setResult] = useState<TestResult | null>(null);
   const [prevResult, setPrevResult] = useState<TestResult | null>(null);
@@ -482,7 +482,6 @@ export default function TypingTest() {
     setConfirmVulgar(false);
     setPanel((p) => (p === which ? "none" : which));
   };
-  /** "try it now" in the creator: load the challenge in this tab. */
   const tryChallenge = (encoded: string) => {
     setPanel("none");
     window.location.hash = `c=${encoded}`; // hashchange listener does the rest
@@ -525,12 +524,23 @@ export default function TypingTest() {
             onToggleSound={handleToggleSound}
             onOpenChallenge={() => togglePanel("challenge")}
             onOpenSubmit={() => togglePanel("submit")}
+            onOpenLeaderboard={() => togglePanel("leaderboard")}
           />
         )}
         {panel === "challenge" && (
           <ChallengePanel onClose={() => setPanel("none")} onTry={tryChallenge} />
         )}
         {panel === "submit" && <SubmitPanel onClose={() => setPanel("none")} />}
+        {panel === "leaderboard" && result && (
+          <Leaderboard
+            wpm={result.wpm}
+            accuracy={result.accuracy}
+            raw={result.rawWpm}
+            mode={challenge ? "challenge" : modeId}
+            duration={challenge ? Math.round(result.seconds) : duration}
+            onClose={() => setPanel("none")}
+          />
+        )}
         {confirmVulgar && (
           <div className="confirm" role="alertdialog" aria-label="uncensored mode warning">
             <span className="warn">you asked for it ah —</span>

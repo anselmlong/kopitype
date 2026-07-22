@@ -68,8 +68,17 @@ export default function Stats({
       <GlossaryWords words={attempted} />
 
       <div className="stats-sub">
-        <span>
-          chars {result.correctChars}/{result.typedChars}
+        <span className="char-breakdown">
+          <span className="break-correct">{result.correctChars}</span>
+          <span className="break-label">correct</span>
+          {result.typedChars - result.correctChars > 0 && (
+            <>
+              <span className="break-wrong">{result.typedChars - result.correctChars}</span>
+              <span className="break-label">wrong</span>
+            </>
+          )}
+          <span className="break-total">{result.typedChars}</span>
+          <span className="break-label">total</span>
         </span>
         {previous && (
           <span>
