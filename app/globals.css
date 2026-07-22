@@ -191,27 +191,9 @@ a:focus-visible {
   opacity: 0.6;
 }
 
-/* right tier: state lives in the dot, never in the label width */
-.mb-dot {
-  font-size: 0.62em;
-  line-height: 1;
-  width: 1em;
-  flex: none;
-  text-align: center;
-  color: var(--sub-dim);
-  transition: color 0.12s ease;
-}
+/* sound is a lone icon in the right tier: cream when on, muted when off */
 .mb-toggle.is-on {
   color: var(--text);
-}
-.mb-toggle.is-on .mb-dot {
-  color: var(--text);
-}
-/* the one exception to the accent rule: uncensored unlocks a corpus,
-   so it earns its own colour — and it's a warning, not a decoration */
-.mb-uncensored.is-on,
-.mb-uncensored.is-on .mb-dot {
-  color: var(--error);
 }
 
 /* a panel button stays lit while its panel is open */
@@ -226,6 +208,10 @@ a:focus-visible {
   width: 1.15em;
   height: 1.15em;
   flex: none;
+}
+/* an icon-only button (sound) shows its icon at every width */
+.mb-iconbtn .mb-icon {
+  display: inline-flex;
 }
 
 /* ---- hardening -------------------------------------------------------- */
@@ -278,8 +264,7 @@ a:focus-visible {
     gap: 0.4rem;
   }
   /* swap each secondary button from label to icon */
-  .mb-secondary .mb-label,
-  .mb-secondary .mb-dot {
+  .mb-secondary .mb-label {
     display: none;
   }
   .mb-secondary .mb-icon {
@@ -297,8 +282,7 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mb-btn,
-  .mb-dot {
+  .mb-btn {
     transition: none;
   }
 }
@@ -650,7 +634,7 @@ a:focus-visible {
   color: var(--text);
 }
 
-/* ---- confirm popover for uncensored (no layout shift) ---- */
+/* ---- confirm popover for vulgar mode (no layout shift) ---- */
 .modebar-wrap {
   position: relative;
 }

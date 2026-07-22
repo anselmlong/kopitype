@@ -12,8 +12,6 @@ interface ModeBarProps {
   durations: number[];
   activeDuration: number;
   onDuration: (d: number) => void;
-  uncensored: boolean;
-  onToggleUncensored: () => void;
   soundOn: boolean;
   onToggleSound: () => void;
   onOpenChallenge: () => void;
@@ -58,13 +56,9 @@ function useRadioKeys<T>(
   );
 }
 
-/** A toggle's state, as a fixed-width glyph — never changes the label's width. */
-function StateDot({ on }: { on: boolean }) {
-  return <span className="mb-dot" aria-hidden>{on ? "●" : "○"}</span>;
-}
-
 /* Compact line icons — shown in place of the labels on phones (see .mb-icon).
-   Monoline, currentColor, so they inherit the button's state colour. */
+   Monoline, currentColor, so they inherit the button's state colour.
+   Sound is icon-only everywhere; the rest are icon-only below 640px. */
 const svg = {
   viewBox: "0 0 16 16",
   fill: "none",
@@ -89,17 +83,6 @@ function IconSound({ on }: { on: boolean }) {
       ) : (
         <path d="M11 6.5l3 3M14 6.5l-3 3" />
       )}
-    </svg>
-  );
-}
-
-/** warning triangle — the vulgarities toggle (goes red when armed) */
-function IconWarn() {
-  return (
-    <svg {...svg}>
-      <path d="M8 2.5l5.7 10.3H2.3z" />
-      <path d="M8 6.6v2.8" />
-      <circle cx="8" cy="11.2" r="0.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -139,8 +122,6 @@ export default function ModeBar({
   durations,
   activeDuration,
   onDuration,
-  uncensored,
-  onToggleUncensored,
   soundOn,
   onToggleSound,
   onOpenChallenge,
@@ -218,27 +199,13 @@ export default function ModeBar({
         <div className="mb-group" role="group" aria-label="settings">
           <button
             type="button"
-            className={`mb-btn mb-toggle mb-uncensored${uncensored ? " is-on" : ""}`}
-            aria-pressed={uncensored}
-            aria-label="uncensored"
-            onClick={onToggleUncensored}
-            title="unlock the hokkien vulgarities. off by default."
-          >
-            <StateDot on={uncensored} />
-            <IconWarn />
-            <span className="mb-label">uncensored</span>
-          </button>
-          <button
-            type="button"
-            className={`mb-btn mb-toggle${soundOn ? " is-on" : ""}`}
+            className={`mb-btn mb-toggle mb-iconbtn${soundOn ? " is-on" : ""}`}
             aria-pressed={soundOn}
             aria-label="sound"
             onClick={onToggleSound}
-            title="quiet keystroke and finish sounds"
+            title={soundOn ? "sound on — click to mute" : "sound off — click to unmute"}
           >
-            <StateDot on={soundOn} />
             <IconSound on={soundOn} />
-            <span className="mb-label">sound</span>
           </button>
         </div>
 
