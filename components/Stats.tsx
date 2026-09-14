@@ -7,6 +7,31 @@ import PaceChart from "./PaceChart";
 import GlossaryWords from "./GlossaryWords";
 import BestSubmit from "./BestSubmit";
 
+/** transitions-dev number pop-in: split a number into staggered digit spans
+ * that slide/blur in when the group is marked .is-animating. The last two
+ * characters ride in 1×/2× --digit-stagger behind the leading digits. */
+function Digits({ value }: { value: string }) {
+  const chars = value.split("");
+  return (
+    <span
+      className="t-digit-group is-animating"
+      aria-label={value}
+    >
+      {chars.map((ch, i) => (
+        <span
+          key={i}
+          className="t-digit"
+          data-stagger={
+            i === chars.length - 2 ? "1" : i === chars.length - 1 ? "2" : undefined
+          }
+        >
+          {ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 interface StatsProps {
   result: TestResult;
   previous: TestResult | null;
@@ -52,18 +77,18 @@ export default function Stats({
       <div className="stats-main">
         <div className={`stat${isNewBest ? " best" : ""}`}>
           <div className="label">wpm</div>
-          <div className="value">{result.wpm}</div>
+          <div className="value"><Digits value={String(result.wpm)} /></div>
         </div>
         <div className="stat small">
           <div className="label">accuracy</div>
           <div className="value">
-            {result.accuracy}
+            <Digits value={String(result.accuracy)} />{" "}
             <span className="unit">%</span>
           </div>
         </div>
         <div className="stat small">
           <div className="label">raw</div>
-          <div className="value">{result.rawWpm}</div>
+          <div className="value"><Digits value={String(result.rawWpm)} /></div>
         </div>
       </div>
 
