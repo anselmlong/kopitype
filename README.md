@@ -166,3 +166,20 @@ Accounts, themes, multiplayer, punctuation/numbers toggles, i18n.
 (Personal bests, sound, the pace graph, custom challenges, and the glossary all
 landed post-v1 — local-only or in-URL. The global leaderboard came later and is the
 one piece with a backend; everything else still runs without one.)
+# Leaderboard submission controls
+
+The API accepts known corpus IDs and 15/30/60-second runs, rejects blank names,
+and caps raw WPM at 1,000. SQLite enforces 10 submissions per client per minute
+and 200 total per minute across workers sharing the database. Expired counters
+are removed during submissions. CORS defaults to kopitype.com, www.kopitype.com
+and localhost:3000; override `CORS_ORIGINS` with exact comma-separated origins.
+
+IP quotas use the ASGI peer address, never arbitrary forwarded headers. Configure
+Uvicorn's trusted proxy IPs only for your actual reverse proxy; otherwise users
+behind a proxy share its quota. A shared NAT also shares a quota. CORS and quotas
+reduce browser misuse and spam; scores remain client-reported, are not verified
+proof of a typing run, and nicknames are not authenticated identities. Strong
+anti-cheat requires server-issued challenges and run validation as a follow-up.
+
+Backend regressions: install `leaderboard-api/requirements.txt` plus `httpx`, then
+run `cd leaderboard-api && python -m unittest test_api`.

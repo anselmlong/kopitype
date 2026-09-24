@@ -5,11 +5,13 @@ import os
 import sqlite3
 import threading
 import time
-from contextlib import asynccontextmanager
+import hashlib
+from typing import Literal
+from contextlib import asynccontextmanager, closing
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # --- DB ---
@@ -41,6 +43,13 @@ def get_db() -> sqlite3.Connection:
             )
         """)
         conn.execute("""
+            CREATE TABLE IF NOT EXISTS submission_limits (
+                bucket TEXT PRIMARY KEY,
+                window INTEGER NOT NULL,
+                requests INTEGER NOT NULL
+            )
+        """)
+        conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_scores_lb
             ON scores (mode, duration, wpm DESC, ts ASC)
         """)
@@ -51,13 +60,24 @@ def get_db() -> sqlite3.Connection:
 
 # --- Models ---
 
+Mode = Literal["default", "singlish", "phrases", "mrt", "xmm", "vulgar"]
+Duration = Literal[15, 30, 60]
+
 class ScoreIn(BaseModel):
-    nickname: str = Field(max_length=30)
+    nickname: str = Field(min_length=1, max_length=30)
     wpm: int = Field(ge=0, le=400)
     accuracy: float = Field(ge=0, le=100)
-    mode: str = Field(default="default", max_length=20)
-    duration: int = Field(default=30, ge=1)
-    raw: int = Field(default=0, ge=0)
+    mode: Mode = "default"
+    duration: Duration = 30
+    raw: int = Field(default=0, ge=0, le=1000)
+
+    @field_validator("nickname")
+    @classmethod
+    def nonblank_nickname(cls, value):
+        value = value.strip()
+        if not value or any(ord(char) < 32 for char in value):
+            raise ValueError("Nickname must contain visible text without control characters")
+        return value
 
 
 class ScoreOut(BaseModel):
@@ -80,14 +100,37 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="kopitype leaderboard", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[value.strip() for value in os.environ.get(
+        "CORS_ORIGINS", "https://kopitype.com,https://www.kopitype.com,http://localhost:3000"
+    ).split(",") if value.strip() and value.strip() != "*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
+def reserve_submission(request: Request):
+    """Persistent minute quotas shared by workers. Ignore client-supplied IP headers."""
+    get_db()
+    window = int(time.time()) // 60
+    client = request.client.host if request.client else "unknown"
+    digest = hashlib.sha256(f"{window}:{client}".encode()).hexdigest()
+    with closing(sqlite3.connect(DB_PATH, timeout=5)) as db, db:
+        db.execute("BEGIN IMMEDIATE")
+        db.execute("DELETE FROM submission_limits WHERE window < ?", (window,))
+        for bucket, limit in [("global", 200), (digest, 10)]:
+            row = db.execute("SELECT requests FROM submission_limits WHERE bucket = ? AND window = ?",
+                             (bucket, window)).fetchone()
+            if row and row[0] >= limit:
+                raise HTTPException(429, "Too many submissions. Try again shortly.",
+                                    headers={"Retry-After": "60"})
+        for bucket in ["global", digest]:
+            db.execute("INSERT INTO submission_limits VALUES (?, ?, 1) ON CONFLICT(bucket) DO UPDATE SET requests = requests + 1",
+                       (bucket, window))
+
+
 @app.post("/api/score")
-def submit_score(score: ScoreIn) -> dict:
+def submit_score(score: ScoreIn, request: Request) -> dict:
+    reserve_submission(request)
     db = get_db()
     now = time.time()
     db.execute(
@@ -126,10 +169,12 @@ def submit_score(score: ScoreIn) -> dict:
 
 @app.get("/api/leaderboard")
 def get_leaderboard(
-    mode: str = Query("default"),
+    mode: Mode = Query("default"),
     duration: int = Query(30),
     limit: int = Query(20, ge=1, le=100),
 ) -> list[ScoreOut]:
+    if duration not in (15, 30, 60):
+        raise HTTPException(422, "Duration must be 15, 30 or 60 seconds")
     db = get_db()
     # One row per player: their best run. SQLite fills the bare accuracy/raw/ts
     # columns from the same row that holds MAX(wpm) (the "bare column" rule),
