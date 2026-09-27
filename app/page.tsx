@@ -14,7 +14,10 @@ export default function Home() {
 
       <footer className="footer">
         <span>type until the timer stops. get your singlish wpm.</span>
-        <a href="https://github.com/anselmlong/kopitype">github</a>
+        <span>
+          <a href="/launch.mp4">launch video</a> ·{" "}
+          <a href="https://github.com/anselmlong/kopitype">github</a>
+        </span>
       </footer>
     </main>
   );
