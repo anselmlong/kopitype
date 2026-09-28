@@ -213,6 +213,9 @@ a:focus-visible,
 }
 
 /* the "s" rides along quietly so 15/30/60 can't read as a mode */
+.mb-dur {
+  gap: 0;
+}
 .mb-unit {
   color: var(--muted);
   margin-left: 0.05em;
@@ -252,6 +255,10 @@ a:focus-visible,
 @media (pointer: coarse) {
   .gloss-chip {
     padding: 0.35rem 0.7rem;
+  }
+  /* taller chips: keep four whole rows plus a half-row peek */
+  .gloss-words {
+    max-height: 11.2rem;
   }
   .modebar {
     gap: 0.35rem 1rem;
@@ -461,7 +468,7 @@ a:focus-visible,
 /* ---- mid-test retry: quiet, centered, there when you fumble ---- */
 .retry {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
   gap: 0.25rem;
 }
@@ -482,35 +489,12 @@ a:focus-visible,
   color: var(--muted);
   font-size: 0.75rem;
 }
-.retry-hint kbd {
-  color: var(--sub);
-}
 
 /* ---- timer ---- */
-.timer-row {
-  display: flex;
-  align-items: baseline;
-  gap: 1.5rem;
-  height: 2rem;
-}
 .timer {
   color: var(--accent);
   font-size: 1.5rem;
 }
-.live-stats {
-  display: flex;
-  gap: 1rem;
-  color: var(--sub);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-.live-wpm {
-  color: var(--accent);
-}
-.live-acc {
-  color: var(--sub);
-}
-
 /* ---- stats / end screen ---- */
 .stats {
   display: flex;
@@ -617,7 +601,7 @@ a:focus-visible,
 .stat .unit {
   color: var(--sub);
   font-size: 1rem;
-  margin-left: 0.25rem;
+  margin-left: 0.15rem;
 }
 .stats-sub {
   display: flex;
@@ -650,35 +634,6 @@ a:focus-visible,
   font-size: 0.75rem;
   margin-right: 0.3rem;
 }
-.prev-score {
-  color: var(--sub);
-  font-size: 0.85rem;
-}
-
-/* ---- chart ---- */
-.chart-wrap {
-  width: 100%;
-  height: 64px;
-  overflow: hidden;
-}
-.chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 100%;
-}
-.bar {
-  flex: 1;
-  min-width: 3px;
-  background: var(--accent-soft);
-  border-radius: 1px 1px 0 0;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-}
-.bar:hover {
-  opacity: 1;
-}
-
 /* ---- buttons ---- */
 .actions {
   display: flex;
@@ -694,17 +649,21 @@ a:focus-visible,
   font-family: inherit;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
 .btn:hover {
   background: var(--accent);
   color: var(--bg);
 }
+.btn:active {
+  transform: translateY(1px);
+}
 .hint-key {
   color: var(--sub);
   font-size: 0.8rem;
 }
-.hint-key kbd {
+.hint-key kbd,
+.retry-hint kbd {
   background: var(--bg-raised);
   border-radius: 0.3rem;
   padding: 0.05rem 0.4rem;
@@ -825,6 +784,10 @@ a:focus-visible,
   font-size: 0.85rem;
   cursor: pointer;
   padding: 0.2rem 0.3rem;
+}
+.panel-kind button:hover,
+.lb-tabs button:hover {
+  color: var(--text);
 }
 .panel-kind button.active {
   color: var(--accent);
@@ -989,11 +952,22 @@ a:focus-visible,
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.5rem;
-  max-height: 9.5rem;
+  max-height: 9rem;
   overflow-y: auto;
+  animation: gloss-more linear both;
+  animation-timeline: scroll(self);
   scrollbar-width: thin;
   scrollbar-color: var(--sub-dim) var(--bg-raised);
   scrollbar-gutter: stable;
+}
+@keyframes gloss-more {
+  from,
+  95% {
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 1.75rem), transparent);
+  }
+  to {
+    mask-image: none;
+  }
 }
 .gloss-words::-webkit-scrollbar {
   width: 0.55rem;
@@ -1135,10 +1109,6 @@ a:focus-visible,
   color: var(--accent);
   font-size: 0.9rem;
 }
-.lb-rank {
-  color: var(--green);
-  font-size: 0.85rem;
-}
 .lb-rank-big {
   color: var(--accent);
   font-size: 1.4rem;
@@ -1161,7 +1131,9 @@ a:focus-visible,
   cursor: pointer;
   padding: 0.2rem 0.3rem;
 }
-.lb-tabs button.active {
+.lb-tabs button.active,
+.lb-tabs button.active:hover,
+.panel-kind button.active:hover {
   color: var(--accent);
 }
 .lb-table-wrap {
@@ -1230,6 +1202,7 @@ a:focus-visible,
 
 /* ---- new-best leaderboard prompt (results screen) ---- */
 .lb-best {
+  max-width: 44rem;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -1254,6 +1227,11 @@ a:focus-visible,
 .lb-best .btn {
   padding: 0.35rem 0.9rem;
   font-size: 0.85rem;
+  /* the box is already raised; a hairline keeps the button reading as one */
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.lb-best .btn:hover {
+  box-shadow: none;
 }
 .lb-best-form {
   display: flex;
