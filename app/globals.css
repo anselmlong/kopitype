@@ -563,6 +563,71 @@ a:focus-visible,
   font-weight: 700;
 }
 
+/* ---- delight: the kopi verdict + steam off a personal best ---- */
+.kopi-verdict {
+  margin-top: -0.75rem; /* belongs to the numbers above, not the chart below */
+  color: var(--sub);
+  font-size: 0.9rem;
+  animation: fadeIn 0.4s 0.35s ease-out both; /* lands after the digits */
+}
+.kopi-cup {
+  color: var(--text);
+}
+.stat .value {
+  position: relative;
+}
+.steam {
+  position: absolute;
+  left: 1.2em; /* rise off the digits, clear of the "wpm" label */
+  bottom: 88%;
+  width: 1.1em;
+  height: 0.65em;
+  overflow: visible;
+  pointer-events: none;
+}
+.steam path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0;
+  animation: steam-rise 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.steam path:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.steam path:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes steam-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(0);
+  }
+  30% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+    filter: blur(1.5px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kopi-verdict {
+    animation: none;
+  }
+  /* no rise: a single still wisp says the same thing */
+  .steam path {
+    animation: none;
+    opacity: 0.45;
+  }
+  .steam path:nth-child(odd) {
+    display: none;
+  }
+}
+
 /* ---- transitions-dev: digit pop-in for stat values ---- */
 @keyframes t-digit-pop-in {
   0% {
@@ -963,7 +1028,7 @@ a:focus-visible,
 @keyframes gloss-more {
   from,
   95% {
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 1.75rem), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 1.1rem), rgba(0, 0, 0, 0.25));
   }
   to {
     mask-image: none;

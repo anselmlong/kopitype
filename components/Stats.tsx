@@ -6,6 +6,18 @@ import { PacePoint } from "@/lib/pace";
 import PaceChart from "./PaceChart";
 import GlossaryWords from "./GlossaryWords";
 import BestSubmit from "./BestSubmit";
+import { kopiVerdict } from "@/lib/kopi";
+
+/** Three wisps of steam off a fresh personal best — rises once, then gone. */
+function Steam() {
+  return (
+    <svg className="steam" viewBox="0 0 48 28" aria-hidden>
+      <path d="M12 26c-4-5 4-8 0-13s3-8 1-11" />
+      <path d="M24 26c-4-5 4-8 0-13s3-8 1-11" />
+      <path d="M36 26c-4-5 4-8 0-13s3-8 1-11" />
+    </svg>
+  );
+}
 
 /** transitions-dev number pop-in: split a number into staggered digit spans
  * that slide/blur in when the group is marked .is-animating. The last two
@@ -64,6 +76,7 @@ export default function Stats({
   attempted,
   onRestart,
 }: StatsProps) {
+  const verdict = kopiVerdict(result.wpm);
   const seconds = isChallenge
     ? `${result.seconds.toFixed(1)}s`
     : `${duration}s`;
@@ -82,7 +95,10 @@ export default function Stats({
       <div className="stats-main">
         <div className={`stat${isNewBest ? " best" : ""}`}>
           <div className="label">wpm</div>
-          <div className="value"><Digits value={String(result.wpm)} /></div>
+          <div className="value">
+            {isNewBest && <Steam />}
+            <Digits value={String(result.wpm)} />
+          </div>
         </div>
         <div className="stat small">
           <div className="label">accuracy</div>
@@ -96,6 +112,12 @@ export default function Stats({
           <div className="value"><Digits value={String(result.rawWpm)} /></div>
         </div>
       </div>
+
+      {verdict && (
+        <p className="kopi-verdict">
+          <span className="kopi-cup">{verdict.cup}</span> — {verdict.remark}
+        </p>
+      )}
 
       <PaceChart points={pace} />
 
