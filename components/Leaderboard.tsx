@@ -119,6 +119,7 @@ export default function Leaderboard({ score, mode, duration, onClose }: Leaderbo
       <div className="lb-tabs">
         <button
           className={tab === "board" ? "active" : ""}
+          aria-pressed={tab === "board"}
           onClick={() => setTab("board")}
         >
           leaderboard
@@ -126,6 +127,7 @@ export default function Leaderboard({ score, mode, duration, onClose }: Leaderbo
         {hasScore && !submitted && (
           <button
             className={tab === "submit" ? "active" : ""}
+            aria-pressed={tab === "submit"}
             onClick={() => setTab("submit")}
           >
             submit

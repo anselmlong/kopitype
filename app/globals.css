@@ -3,8 +3,9 @@
   --bg: #17110d;
   --bg-raised: #211913;
   --text: #ece0cd; /* correct / typed */
-  --sub: #6d5d4e; /* pending, muted */
-  --sub-dim: #4a3f35;
+  --sub: #a08b76; /* pending words, labels — 5.3:1 on --bg-raised */
+  --muted: #94816e; /* tertiary text (hints, notes, footer) — 4.6:1 on --bg-raised */
+  --sub-dim: #4a3f35; /* hairlines, borders, scrollbar thumbs — never text */
   --accent: #c8935f; /* kopi brown — caret, active mode, logo dot */
   --accent-soft: #8a6b4f;
   --error: #cf6b5d; /* wrong char */
@@ -33,6 +34,15 @@ body {
   height: 100%;
 }
 
+html {
+  color-scheme: dark; /* native scrollbars + form controls match the roast */
+}
+
+::selection {
+  background: rgba(200, 147, 95, 0.35);
+  color: var(--text);
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -44,9 +54,23 @@ body {
   overflow-x: hidden;
 }
 
+/* announced to assistive tech, invisible on screen */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* keyboard focus should be visible everywhere */
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+[tabindex]:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 0.2rem;
@@ -190,7 +214,7 @@ a:focus-visible {
 
 /* the "s" rides along quietly so 15/30/60 can't read as a mode */
 .mb-unit {
-  color: var(--sub-dim);
+  color: var(--muted);
   margin-left: 0.05em;
 }
 .mb-dur.is-on .mb-unit,
@@ -226,6 +250,9 @@ a:focus-visible {
 
 /* thumbs need something to hit; 0.2rem of padding is not it */
 @media (pointer: coarse) {
+  .gloss-chip {
+    padding: 0.35rem 0.7rem;
+  }
   .modebar {
     gap: 0.35rem 1rem;
   }
@@ -257,7 +284,18 @@ a:focus-visible {
   }
   .mb-primary .mb-group {
     width: 100%;
-    gap: 0.6rem 1rem;
+    gap: 0.25rem 0.35rem;
+  }
+  /* all five modes fit one row at 360px+ instead of stranding "vulgar" */
+  .mb-primary .mb-btn {
+    min-width: 2.75rem;
+    justify-content: center;
+    padding-inline: 0.45rem;
+  }
+  .mb-mode.is-on::after,
+  .mb-dur.is-on::after {
+    left: 0.45rem;
+    right: 0.45rem;
   }
   /* secondary is one icon row under a divider */
   .mb-secondary {
@@ -430,7 +468,7 @@ a:focus-visible {
 .retry button {
   background: none;
   border: none;
-  color: var(--sub-dim);
+  color: var(--muted);
   font-family: inherit;
   font-size: 0.9rem;
   cursor: pointer;
@@ -441,7 +479,7 @@ a:focus-visible {
   color: var(--text);
 }
 .retry-hint {
-  color: var(--sub-dim);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 .retry-hint kbd {
@@ -559,7 +597,6 @@ a:focus-visible {
 }
 .t-digit {
   display: inline-block;
-  will-change: transform, opacity, filter;
 }
 .t-digit-group.is-animating .t-digit {
   animation: t-digit-pop-in var(--digit-dur) var(--digit-ease) both;
@@ -609,7 +646,7 @@ a:focus-visible {
   font-weight: 600;
 }
 .char-breakdown .break-label {
-  color: var(--sub-dim);
+  color: var(--muted);
   font-size: 0.75rem;
   margin-right: 0.3rem;
 }
@@ -774,7 +811,7 @@ a:focus-visible {
   outline-offset: 1px;
 }
 .panel-input::placeholder {
-  color: var(--sub-dim);
+  color: var(--muted);
 }
 .panel-kind {
   display: flex;
@@ -827,7 +864,7 @@ a:focus-visible {
   pointer-events: none;
 }
 .panel-fine {
-  color: var(--sub-dim);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 
@@ -837,7 +874,8 @@ a:focus-visible {
 }
 .pace-head {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0 1rem;
   align-items: baseline;
   margin-bottom: 0.25rem;
 }
@@ -846,7 +884,7 @@ a:focus-visible {
   font-size: 0.8rem;
 }
 .pace-note {
-  color: var(--sub-dim);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 .pace-wrap {
@@ -933,7 +971,8 @@ a:focus-visible {
 }
 .gloss-head {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0 1rem;
   align-items: baseline;
   margin-bottom: 0.4rem;
 }
@@ -942,7 +981,7 @@ a:focus-visible {
   font-size: 0.8rem;
 }
 .gloss-note {
-  color: var(--sub-dim);
+  color: var(--muted);
   font-size: 0.75rem;
 }
 .gloss-words {
@@ -990,7 +1029,7 @@ a:focus-visible {
   background: var(--accent);
 }
 .gloss-plain {
-  color: var(--sub-dim);
+  color: var(--muted);
   font-size: 0.85rem;
   padding: 0.1rem 0.15rem;
 }
@@ -1020,7 +1059,8 @@ a:focus-visible {
 /* ---- footer ---- */
 .footer {
   margin-top: auto;
-  color: var(--sub-dim);
+  text-wrap: pretty;
+  color: var(--muted);
   font-size: 0.8rem;
   display: flex;
   justify-content: space-between;
@@ -1038,6 +1078,18 @@ a:focus-visible {
 @media (max-width: 600px) {
   .app {
     padding: 2rem 1rem;
+  }
+  /* the chart scales down ~0.6x on a phone; compensate in viewBox units */
+  .pace-tick {
+    font-size: 15px;
+  }
+  .pace-endlabel {
+    font-size: 16px;
+  }
+  .pace-head,
+  .gloss-head {
+    flex-direction: column;
+    gap: 0.1rem;
   }
   .wordstream {
     font-size: 1.25rem;
@@ -1124,7 +1176,7 @@ a:focus-visible {
   font-size: 0.85rem;
 }
 .lb-table th {
-  color: var(--sub-dim);
+  color: var(--muted);
   text-align: left;
   padding: 0.3rem 0.5rem;
   font-weight: 400;
@@ -1157,7 +1209,7 @@ a:focus-visible {
   color: var(--sub);
 }
 .lb-empty {
-  color: var(--sub-dim);
+  color: var(--muted);
   text-align: center;
   padding: 1rem !important;
 }
