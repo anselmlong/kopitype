@@ -55,6 +55,7 @@ export default function SubmitPanel({ onClose }: SubmitPanelProps) {
             ? "words, separated by spaces or commas — paynow, shiok, mlbb"
             : "the full phrase — eh paynow me the kopi money leh"
         }
+        aria-label={kind === "words" ? "words to submit" : "quote to submit"}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         autoFocus
@@ -65,6 +66,7 @@ export default function SubmitPanel({ onClose }: SubmitPanelProps) {
           type="text"
           maxLength={40}
           placeholder="source — kopi order, gamer life, adulting…"
+          aria-label="quote source"
           value={source}
           onChange={(e) => setSource(e.target.value)}
         />
@@ -74,6 +76,7 @@ export default function SubmitPanel({ onClose }: SubmitPanelProps) {
         type="text"
         maxLength={120}
         placeholder="what it means (optional — feeds the glossary)"
+        aria-label="what it means (optional)"
         value={meaning}
         onChange={(e) => setMeaning(e.target.value)}
       />

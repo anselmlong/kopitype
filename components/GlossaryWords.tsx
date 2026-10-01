@@ -47,7 +47,10 @@ export default function GlossaryWords({ words }: GlossaryWordsProps) {
         <span className="gloss-title">the singlish you typed</span>
         {known.length > 0 && (
           <span className="gloss-note">
-            hover for the meaning · click to read the entry
+            <span className="hint-pointer">
+              hover for the meaning · click to read the entry
+            </span>
+            <span className="hint-touch">tap a word to read the entry</span>
           </span>
         )}
       </div>

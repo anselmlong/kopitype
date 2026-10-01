@@ -16,7 +16,7 @@
   --digit-distance: 8px;
   --digit-stagger: 70ms;
   --digit-blur: 2px;
-  --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --digit-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --digit-dir-x: 0;
   --digit-dir-y: 1;
   --font-mono: "SFMono-Regular", "JetBrains Mono", "Fira Code", ui-monospace,
@@ -190,9 +190,12 @@ a:focus-visible,
   transition: color 0.12s ease, background 0.12s ease;
   white-space: nowrap;
 }
-.mb-btn:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
+/* hover tints only where hover is real — on touch they stick after a tap */
+@media (hover: hover) {
+  .mb-btn:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
 /* left tier: active gets the accent + a hairline underscore */
@@ -269,6 +272,18 @@ a:focus-visible,
   }
   .mb-rule {
     display: none;
+  }
+  /* no Tab key on a touchscreen — the restart button says it all */
+  .retry-hint,
+  .hint-key {
+    display: none;
+  }
+  .actions .btn {
+    min-height: 2.75rem;
+  }
+  .footer a {
+    display: inline-block;
+    padding-block: 0.6rem;
   }
 }
 
@@ -716,9 +731,11 @@ a:focus-visible,
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
-.btn:hover {
-  background: var(--accent);
-  color: var(--bg);
+@media (hover: hover) {
+  .btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
 }
 .btn:active {
   transform: translateY(1px);
@@ -1063,9 +1080,11 @@ a:focus-visible,
   border-bottom: 1px solid var(--accent-soft);
   transition: color 0.12s ease, background 0.12s ease;
 }
-.gloss-chip:hover {
-  color: var(--bg);
-  background: var(--accent);
+@media (hover: hover) {
+  .gloss-chip:hover {
+    color: var(--bg);
+    background: var(--accent);
+  }
 }
 .gloss-plain {
   color: var(--muted);
