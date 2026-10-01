@@ -77,6 +77,9 @@ export default function Leaderboard({ score, mode, duration, onClose }: Leaderbo
     <div className="panel leaderboard-panel" role="dialog" aria-label="leaderboard">
       <div className="panel-title">
         {tab === "submit" ? "submit your score" : "leaderboard"}
+        <span className="panel-context">
+          {mode} · {duration}s
+        </span>
       </div>
 
       {tab === "submit" && hasScore && !submitted && (
@@ -116,15 +119,16 @@ export default function Leaderboard({ score, mode, duration, onClose }: Leaderbo
         </div>
       )}
 
-      <div className="lb-tabs">
-        <button
-          className={tab === "board" ? "active" : ""}
-          aria-pressed={tab === "board"}
-          onClick={() => setTab("board")}
-        >
-          leaderboard
-        </button>
-        {hasScore && !submitted && (
+      {/* a lone "leaderboard" tab would just repeat the title */}
+      {hasScore && !submitted && (
+        <div className="lb-tabs">
+          <button
+            className={tab === "board" ? "active" : ""}
+            aria-pressed={tab === "board"}
+            onClick={() => setTab("board")}
+          >
+            leaderboard
+          </button>
           <button
             className={tab === "submit" ? "active" : ""}
             aria-pressed={tab === "submit"}
@@ -132,8 +136,8 @@ export default function Leaderboard({ score, mode, duration, onClose }: Leaderbo
           >
             submit
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {tab === "board" && (
         <div className="lb-table-wrap">
