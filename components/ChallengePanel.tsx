@@ -47,6 +47,7 @@ export default function ChallengePanel({ onClose, onTry }: ChallengePanelProps) 
         rows={3}
         maxLength={MAX_TEXT_LENGTH}
         placeholder="type the phrase here lah (lowercase, up to 300 chars)"
+        aria-label="challenge phrase"
         value={text}
         onChange={(e) => setText(e.target.value)}
         autoFocus
@@ -56,6 +57,7 @@ export default function ChallengePanel({ onClose, onTry }: ChallengePanelProps) 
         type="text"
         maxLength={40}
         placeholder="your name (optional)"
+        aria-label="your name (optional)"
         value={by}
         onChange={(e) => setBy(e.target.value)}
       />

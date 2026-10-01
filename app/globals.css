@@ -16,7 +16,7 @@
   --digit-distance: 8px;
   --digit-stagger: 70ms;
   --digit-blur: 2px;
-  --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --digit-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --digit-dir-x: 0;
   --digit-dir-y: 1;
   --font-mono: "SFMono-Regular", "JetBrains Mono", "Fira Code", ui-monospace,
@@ -190,9 +190,12 @@ a:focus-visible,
   transition: color 0.12s ease, background 0.12s ease;
   white-space: nowrap;
 }
-.mb-btn:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
+/* hover tints only where hover is real — on touch they stick after a tap */
+@media (hover: hover) {
+  .mb-btn:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
 /* left tier: active gets the accent + a hairline underscore */
@@ -270,6 +273,18 @@ a:focus-visible,
   .mb-rule {
     display: none;
   }
+  /* no Tab key on a touchscreen — the restart button says it all */
+  .retry-hint,
+  .hint-key {
+    display: none;
+  }
+  .actions .btn {
+    min-height: 2.75rem;
+  }
+  .footer a {
+    display: inline-block;
+    padding-block: 0.6rem;
+  }
 }
 
 /* on a phone: modes + durations stay as text rows (they're names), but the
@@ -309,7 +324,7 @@ a:focus-visible,
     width: 100%;
     margin-left: 0;
     flex-wrap: wrap;
-    gap: 0.4rem 1.5rem;
+    gap: 0.4rem 1rem;
     border-top: 1px solid var(--sub-dim);
     padding-top: 0.5rem;
   }
@@ -328,9 +343,13 @@ a:focus-visible,
   .mb-secondary .mb-btn {
     padding: 0.35rem 0.55rem;
   }
-  /* vertical hairlines make no sense once the rows are stacked */
+  /* vertical hairlines make no sense once the rows are stacked… */
   .mb-rule {
     display: none;
+  }
+  /* …except inside the icon row, where it keeps sound apart from the panels */
+  .mb-secondary .mb-rule {
+    display: block;
   }
 }
 
@@ -568,6 +587,7 @@ a:focus-visible,
   margin-top: -0.75rem; /* belongs to the numbers above, not the chart below */
   color: var(--sub);
   font-size: 0.9rem;
+  text-wrap: pretty;
   animation: fadeIn 0.4s 0.35s ease-out both; /* lands after the digits */
 }
 .kopi-cup {
@@ -716,9 +736,11 @@ a:focus-visible,
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
-.btn:hover {
-  background: var(--accent);
-  color: var(--bg);
+@media (hover: hover) {
+  .btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
 }
 .btn:active {
   transform: translateY(1px);
@@ -734,6 +756,32 @@ a:focus-visible,
   padding: 0.05rem 0.4rem;
   font-family: inherit;
   color: var(--text);
+  display: inline-block;
+}
+/* you pressed Tab: the keycap goes down with your finger, then springs back */
+.retry-hint kbd.is-pressed {
+  animation: kbd-press 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes kbd-press {
+  0% {
+    transform: translateY(2px);
+    background: var(--accent);
+    color: var(--bg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .retry-hint kbd.is-pressed {
+    animation-name: kbd-flash; /* keep the acknowledgement, lose the travel */
+  }
+  @keyframes kbd-flash {
+    0% {
+      background: var(--accent);
+      color: var(--bg);
+    }
+  }
 }
 
 /* ---- confirm popover for vulgar mode (no layout shift) ---- */
@@ -813,7 +861,15 @@ a:focus-visible,
   animation: confirm-in 0.15s ease-out both;
 }
 .panel-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
   color: var(--accent);
+}
+/* which board you're looking at — quiet, beside the title */
+.panel-context {
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 .panel-blurb {
   color: var(--sub);
@@ -1063,9 +1119,11 @@ a:focus-visible,
   border-bottom: 1px solid var(--accent-soft);
   transition: color 0.12s ease, background 0.12s ease;
 }
-.gloss-chip:hover {
-  color: var(--bg);
-  background: var(--accent);
+@media (hover: hover) {
+  .gloss-chip:hover {
+    color: var(--bg);
+    background: var(--accent);
+  }
 }
 .gloss-plain {
   color: var(--muted);
@@ -1105,6 +1163,9 @@ a:focus-visible,
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+.footer > span:first-child {
+  text-wrap: balance;
 }
 .footer a {
   color: var(--sub);
@@ -1281,6 +1342,7 @@ a:focus-visible,
 .lb-best-line {
   color: var(--sub);
   font-size: 0.9rem;
+  text-wrap: pretty;
 }
 .lb-best-line strong {
   color: var(--accent);

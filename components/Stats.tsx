@@ -76,7 +76,10 @@ export default function Stats({
   attempted,
   onRestart,
 }: StatsProps) {
-  const verdict = kopiVerdict(result.wpm);
+  const verdict = kopiVerdict(
+    result.wpm,
+    result.typedChars > 0 && result.correctChars === result.typedChars
+  );
   const seconds = isChallenge
     ? `${result.seconds.toFixed(1)}s`
     : `${duration}s`;
