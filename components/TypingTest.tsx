@@ -122,6 +122,8 @@ export default function TypingTest() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [timeLeft, setTimeLeft] = useState(0);
   const [focused, setFocused] = useState(false);
+  // bumps when Tab restarts, so the on-screen keycap presses with you
+  const [tabPress, setTabPress] = useState(0);
   const [, rerender] = useReducer((x: number) => x + 1, 0);
 
   const [result, setResult] = useState<TestResult | null>(null);
@@ -411,6 +413,7 @@ export default function TypingTest() {
           panelRef.current === "none"
         ) {
           e.preventDefault();
+          setTabPress((n) => n + 1);
           restart();
         }
         return;
@@ -621,7 +624,14 @@ export default function TypingTest() {
               restart
             </button>
             <span className="retry-hint">
-              or press <kbd>Tab</kbd>
+              or press{" "}
+              <kbd
+                key={tabPress}
+                className={tabPress ? "is-pressed" : undefined}
+                onAnimationEnd={() => setTabPress(0)}
+              >
+                Tab
+              </kbd>
             </span>
           </div>
         )}

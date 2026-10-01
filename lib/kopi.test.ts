@@ -14,4 +14,10 @@ describe("kopiVerdict", () => {
     expect(kopiVerdict(70)?.cup).toBe("kopi gau gau");
     expect(kopiVerdict(180)?.cup).toBe("kopi di lo");
   });
+
+  it("orders a mistake-free run kosong", () => {
+    expect(kopiVerdict(52, true)?.cup).toBe("kopi gau kosong");
+    expect(kopiVerdict(52, false)?.cup).toBe("kopi gau");
+    expect(kopiVerdict(0, true)).toBeNull();
+  });
 });

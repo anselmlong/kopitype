@@ -19,8 +19,13 @@ const TIERS: { min: number; cup: string; remark: string }[] = [
   { min: 1, cup: "kopi po", remark: "a bit diluted. one more round?" },
 ];
 
-/** Verdict for a finished run's wpm, or null when nothing was typed. */
-export function kopiVerdict(wpm: number): KopiVerdict | null {
+/**
+ * Verdict for a finished run's wpm, or null when nothing was typed. A run
+ * without a single wrong keystroke is ordered "kosong" — nothing added.
+ */
+export function kopiVerdict(wpm: number, clean = false): KopiVerdict | null {
   const tier = TIERS.find((t) => wpm >= t.min);
-  return tier ? { cup: tier.cup, remark: tier.remark } : null;
+  if (!tier) return null;
+  if (clean) return { cup: `${tier.cup} kosong`, remark: "nothing added, not one wrong key" };
+  return { cup: tier.cup, remark: tier.remark };
 }

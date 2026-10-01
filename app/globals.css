@@ -756,6 +756,32 @@ a:focus-visible,
   padding: 0.05rem 0.4rem;
   font-family: inherit;
   color: var(--text);
+  display: inline-block;
+}
+/* you pressed Tab: the keycap goes down with your finger, then springs back */
+.retry-hint kbd.is-pressed {
+  animation: kbd-press 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes kbd-press {
+  0% {
+    transform: translateY(2px);
+    background: var(--accent);
+    color: var(--bg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .retry-hint kbd.is-pressed {
+    animation-name: kbd-flash; /* keep the acknowledgement, lose the travel */
+  }
+  @keyframes kbd-flash {
+    0% {
+      background: var(--accent);
+      color: var(--bg);
+    }
+  }
 }
 
 /* ---- confirm popover for vulgar mode (no layout shift) ---- */
