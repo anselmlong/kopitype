@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchLeaderboard, submitScore } from "@/lib/leaderboard";
+import { fetchLeaderboard, submitScore, loadNickname, saveNickname } from "@/lib/leaderboard";
 
 interface BestSubmitProps {
   wpm: number;
@@ -19,8 +19,6 @@ type State =
   | { s: "done"; rank: number; total: number }
   | { s: "error" }; // board unreachable — fail quiet, don't sour the moment
 
-const NICK_KEY = "kopitype.nickname";
-
 /**
  * Shown on the results screen the instant a run is a new personal best.
  * It checks the global board, tells the typist where the run would land, and
@@ -35,10 +33,8 @@ export default function BestSubmit({ wpm, accuracy, raw, mode, duration }: BestS
 
   // preview: fetch the board once and count how many players sit above this run
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem(NICK_KEY);
-      if (saved) setNickname(saved);
-    }
+    const saved = loadNickname();
+    if (saved) setNickname(saved);
     let alive = true;
     fetchLeaderboard(mode, duration, 100)
       .then((entries) => {
@@ -62,7 +58,7 @@ export default function BestSubmit({ wpm, accuracy, raw, mode, duration }: BestS
         requestAnimationFrame(() => inputRef.current?.focus());
         return;
       }
-      if (typeof window !== "undefined") window.localStorage.setItem(NICK_KEY, n);
+      saveNickname(n);
       setState({ s: "submitting" });
       const res = await submitScore(n, wpm, accuracy, mode, duration, raw);
       if (res) setState({ s: "done", rank: res.rank, total: res.total });

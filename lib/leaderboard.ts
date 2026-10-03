@@ -6,6 +6,28 @@ const API =
   process.env.NEXT_PUBLIC_LEADERBOARD_API?.replace(/\/$/, "") ||
   "https://api.kopitype.com";
 
+const NICK_KEY = "kopitype.nickname";
+
+/** Last nickname used, or "" — never throws when storage is blocked. */
+export function loadNickname(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(NICK_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+/** Remember the nickname for next time; a blocked store just forgets it. */
+export function saveNickname(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(NICK_KEY, name);
+  } catch {
+    // storage blocked — submitting still works, it just won't be remembered
+  }
+}
+
 export interface LeaderboardEntry {
   rank: number;
   nickname: string;
