@@ -22,9 +22,10 @@ to its dictionary entry (Wiktionary, or Wikipedia for the institutions).
 
 ## Stack
 
-- [Next.js](https://nextjs.org) (App Router, TypeScript), statically exported (`output: "export"`) — no server, no API routes
+- [Next.js](https://nextjs.org) (App Router, TypeScript), statically exported (`output: "export"`) — no server, no API routes (the optional
+  leaderboard is a separate backend in `leaderboard-api/`)
 - Corpora are static JSON shipped with the app; nothing is generated at runtime
-- [Vitest](https://vitest.dev) for the wpm/accuracy math
+- [Vitest](https://vitest.dev) for the pure logic in `lib/` (wpm/accuracy, pace, challenges, corpora, records)
 - Deploys to Vercel automatically on push to `main`
 
 ## Run locally
@@ -38,7 +39,7 @@ Other scripts:
 
 ```bash
 npm run build    # production build -> static export in ./out
-npm test         # unit tests for the wpm/accuracy math
+npm test         # unit tests for lib/ (wpm math, pace, challenges, corpora, records)
 ```
 
 To preview the exact static output Vercel serves:
@@ -69,6 +70,38 @@ KOPITYPE_DB=./leaderboard.db uvicorn main:app --port 8000   # from leaderboard-a
 mounted volume in the container). The board shows each player's best run per mode +
 duration, so multiple attempts don't crowd it out.
 
+#### Submission controls
+
+The API accepts known corpus IDs and 15/30/60-second runs, rejects blank names,
+and caps raw WPM at 1,000. SQLite enforces 10 submissions per client per minute
+and 200 total per minute across workers sharing the database. Expired counters
+are removed during submissions. CORS defaults to kopitype.com, www.kopitype.com
+and localhost:3000; override `CORS_ORIGINS` with exact comma-separated origins.
+
+IP quotas use the ASGI peer address, never arbitrary forwarded headers. Configure
+Uvicorn's trusted proxy IPs only for your actual reverse proxy; otherwise users
+behind a proxy share its quota. A shared NAT also shares a quota. CORS and quotas
+reduce browser misuse and spam; scores remain client-reported, are not verified
+proof of a typing run, and nicknames are not authenticated identities. Strong
+anti-cheat requires server-issued challenges and run validation as a follow-up.
+
+When the API runs in Docker behind a reverse proxy on the same host (nginx →
+`127.0.0.1:8124`), every request reaches the container from the Docker bridge
+gateway (typically `172.17.0.1`), so without extra config **all players share one
+10-per-minute quota**. Tell Uvicorn to trust that hop's `X-Forwarded-For` with
+its `FORWARDED_ALLOW_IPS` env var, and publish the port on loopback only so
+nobody can reach the container directly and forge the header:
+
+```bash
+docker run -d --name kopitype-leaderboard \
+  -p 127.0.0.1:8124:8124 \
+  -e FORWARDED_ALLOW_IPS=172.17.0.1 \
+  -v "$PWD/data:/data" kopitype-leaderboard
+```
+
+Backend regressions: install `leaderboard-api/requirements.txt` plus `httpx`, then
+run `cd leaderboard-api && python -m unittest test_api`.
+
 ## How it works
 
 The whole test lives on one page (`app/page.tsx` → `components/TypingTest.tsx`), a small
@@ -91,7 +124,8 @@ state machine: `idle → running → finished`.
   keyboard navigation always works.
 - Quiet synthesized keystroke/finish sounds live in `lib/sound.ts` (WebAudio, no
   audio assets) behind a "sound" toggle that's remembered in `localStorage`.
-- Quote mode shows the attribution of the quote you're typing ("— kopi order").
+- Quote-style modes (phrases, mrt, xmm) show the attribution of the quote you're
+  typing ("— kopi order").
 - While a test runs, the keystroke tallies are snapshotted once a second
   (`lib/pace.ts`, pure + tested); the results screen renders them as an SVG line
   chart (`components/PaceChart.tsx` — hover crosshair, keyboard arrows, no chart
@@ -141,20 +175,20 @@ This is deliberately a two-step change (say you want a "kopi" mode):
    ];
    ```
 
-That's it — it shows up in the mode bar automatically. Add `gated: true` to hide a mode
-behind the "uncensored" toggle (that's how `vulgar.json` is wired). Word-mode tokens must
+That's it — it shows up in the mode bar automatically. Add `gated: true` to make a mode ask
+for a one-tap confirm before it switches in (that's how `vulgar.json` is wired). Word-mode tokens must
 be single words (no spaces); put any multi-word terms in a quotes corpus instead.
 
 ### Corpus sizes
 
 | File | Entries | Shape |
 |---|---|---|
-| `data/words.json` | ~240 | single lowercase tokens |
+| `data/words.json` | ~245 | single lowercase tokens |
 | `data/sg.json` | ~97 | single lowercase tokens (everyday SG) |
 | `data/quotes.json` | 72 | `{ text, source }` phrases |
-| `data/mrt.json` | ~120 | `{ text, source }` station → line |
-| `data/xmm.json` | 32 | `{ text, source }` vowel-less texts |
-| `data/vulgar.json` | 40 | single tokens, gated |
+| `data/mrt.json` | ~122 | `{ text, source }` station → line |
+| `data/xmm.json` | 33 | `{ text, source }` vowel-less texts |
+| `data/vulgar.json` | 44 | single tokens, gated |
 | `data/glossary.json` | ~217 | `term: { meaning, link? }` for the results-screen glossary |
 
 The corpora are hand-written and meant to be human-readable (one entry per line) so they're
@@ -166,20 +200,3 @@ Accounts, themes, multiplayer, punctuation/numbers toggles, i18n.
 (Personal bests, sound, the pace graph, custom challenges, and the glossary all
 landed post-v1 — local-only or in-URL. The global leaderboard came later and is the
 one piece with a backend; everything else still runs without one.)
-# Leaderboard submission controls
-
-The API accepts known corpus IDs and 15/30/60-second runs, rejects blank names,
-and caps raw WPM at 1,000. SQLite enforces 10 submissions per client per minute
-and 200 total per minute across workers sharing the database. Expired counters
-are removed during submissions. CORS defaults to kopitype.com, www.kopitype.com
-and localhost:3000; override `CORS_ORIGINS` with exact comma-separated origins.
-
-IP quotas use the ASGI peer address, never arbitrary forwarded headers. Configure
-Uvicorn's trusted proxy IPs only for your actual reverse proxy; otherwise users
-behind a proxy share its quota. A shared NAT also shares a quota. CORS and quotas
-reduce browser misuse and spam; scores remain client-reported, are not verified
-proof of a typing run, and nicknames are not authenticated identities. Strong
-anti-cheat requires server-issued challenges and run validation as a follow-up.
-
-Backend regressions: install `leaderboard-api/requirements.txt` plus `httpx`, then
-run `cd leaderboard-api && python -m unittest test_api`.
