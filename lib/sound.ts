@@ -67,7 +67,12 @@ export function playPersonalBest(): void {
 
 export function loadSoundPref(): boolean {
   if (typeof window === "undefined") return true;
-  return window.localStorage.getItem(SOUND_KEY) !== "off";
+  try {
+    return window.localStorage.getItem(SOUND_KEY) !== "off";
+  } catch {
+    // storage blocked (privacy settings, sandboxed iframe) — default to on
+    return true;
+  }
 }
 
 export function saveSoundPref(on: boolean): void {

@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchLeaderboard, submitScore, LeaderboardEntry, SubmitResult } from "@/lib/leaderboard";
+import {
+  fetchLeaderboard,
+  submitScore,
+  loadNickname,
+  saveNickname,
+  LeaderboardEntry,
+  SubmitResult,
+} from "@/lib/leaderboard";
 
 interface LeaderboardProps {
   /** The just-finished run, or null when opened without a score (view-only). */
@@ -31,10 +38,8 @@ export default function Leaderboard({ score, mode, duration, onClose }: Leaderbo
 
   // load saved nickname
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem("kopitype.nickname");
-      if (saved) setNickname(saved);
-    }
+    const saved = loadNickname();
+    if (saved) setNickname(saved);
     inputRef.current?.focus();
   }, []);
 
@@ -54,9 +59,7 @@ export default function Leaderboard({ score, mode, duration, onClose }: Leaderbo
     if (!n || n.length > 30) return;
     setSubmitting(true);
     setSubmitError(false);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("kopitype.nickname", n);
-    }
+    saveNickname(n);
     const res = await submitScore(n, score.wpm, score.accuracy, mode, duration, score.raw);
     setSubmitting(false);
     if (res) {
