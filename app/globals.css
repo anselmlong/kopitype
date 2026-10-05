@@ -223,10 +223,15 @@ a:focus-visible,
   color: var(--muted);
   margin-left: 0.05em;
 }
-.mb-dur.is-on .mb-unit,
-.mb-dur:hover .mb-unit {
+.mb-dur.is-on .mb-unit {
   color: inherit;
   opacity: 0.6;
+}
+@media (hover: hover) {
+  .mb-dur:hover .mb-unit {
+    color: inherit;
+    opacity: 0.6;
+  }
 }
 
 /* sound is a lone icon in the right tier: cream when on, muted when off */
@@ -278,8 +283,20 @@ a:focus-visible,
   .hint-key {
     display: none;
   }
-  .actions .btn {
+  .btn,
+  .retry button,
+  .challenge-bar button,
+  .panel-kind button,
+  .lb-tabs button {
     min-height: 2.75rem;
+  }
+  .mb-iconbtn,
+  .mb-open {
+    min-width: 2.75rem;
+    justify-content: center;
+  }
+  .lb-retry {
+    padding: 0.6rem 0.2rem;
   }
   .footer a {
     display: inline-block;
@@ -295,6 +312,7 @@ a:focus-visible,
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
+    padding-inline: 0.75rem;
   }
   /* primary is a vertical stack of full-width rows (modes, then durations) */
   .mb-primary {
@@ -308,16 +326,21 @@ a:focus-visible,
     width: 100%;
     gap: 0.25rem 0.35rem;
   }
-  /* all five modes fit one row at 360px+ instead of stranding "vulgar" */
+  /* all five modes fit one row at 360px+ instead of stranding "vulgar":
+     no fixed gap, the leftover width is spread between them */
+  .mb-primary .mb-group:first-child {
+    justify-content: space-between;
+    gap: 0.25rem 0;
+  }
   .mb-primary .mb-btn {
     min-width: 2.75rem;
     justify-content: center;
-    padding-inline: 0.45rem;
+    padding-inline: 0.3rem;
   }
   .mb-mode.is-on::after,
   .mb-dur.is-on::after {
-    left: 0.45rem;
-    right: 0.45rem;
+    left: 0.3rem;
+    right: 0.3rem;
   }
   /* secondary is one icon row under a divider */
   .mb-secondary {
@@ -501,8 +524,10 @@ a:focus-visible,
   padding: 0.4rem 1rem;
   transition: color 0.12s ease;
 }
-.retry button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .retry button:hover {
+    color: var(--text);
+  }
 }
 .retry-hint {
   color: var(--muted);
@@ -556,9 +581,6 @@ a:focus-visible,
   100% {
     text-shadow: 0 0 0 rgba(200, 147, 95, 0);
   }
-}
-.stats.fade-in {
-  animation: fadeIn 0.3s ease-out;
 }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -838,8 +860,10 @@ a:focus-visible,
   padding: 0.35rem 0.3rem;
   transition: color 0.12s ease;
 }
-.challenge-bar button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .challenge-bar button:hover {
+    color: var(--text);
+  }
 }
 
 /* ---- popover panels (challenge creator, corpus submit) ---- */
@@ -906,9 +930,11 @@ a:focus-visible,
   cursor: pointer;
   padding: 0.2rem 0.3rem;
 }
-.panel-kind button:hover,
-.lb-tabs button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .panel-kind button:hover,
+  .lb-tabs button:hover {
+    color: var(--text);
+  }
 }
 .panel-kind button.active {
   color: var(--accent);
@@ -937,9 +963,11 @@ a:focus-visible,
   background: none;
   color: var(--sub);
 }
-.btn.quiet:hover {
-  background: none;
-  color: var(--text);
+@media (hover: hover) {
+  .btn.quiet:hover {
+    background: none;
+    color: var(--text);
+  }
 }
 .btn.disabled,
 .btn:disabled {
@@ -1171,8 +1199,10 @@ a:focus-visible,
   color: var(--sub);
   text-decoration: none;
 }
-.footer a:hover {
-  color: var(--accent);
+@media (hover: hover) {
+  .footer a:hover {
+    color: var(--accent);
+  }
 }
 
 @media (max-width: 600px) {
@@ -1214,7 +1244,8 @@ a:focus-visible,
   .new-best,
   .stat.best .value,
   .confirm,
-  .panel {
+  .panel,
+  .lb-best {
     animation: none;
   }
   .gloss-tip {
@@ -1286,8 +1317,10 @@ a:focus-visible,
   padding: 0.25rem 0.5rem;
   color: var(--text);
 }
-.lb-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+@media (hover: hover) {
+  .lb-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
 }
 .lb-table .lb-me {
   background: rgba(200, 147, 95, 0.08);
@@ -1357,8 +1390,10 @@ a:focus-visible,
   /* the box is already raised; a hairline keeps the button reading as one */
   box-shadow: inset 0 0 0 1px var(--accent-soft);
 }
-.lb-best .btn:hover {
-  box-shadow: none;
+@media (hover: hover) {
+  .lb-best .btn:hover {
+    box-shadow: none;
+  }
 }
 .lb-best-form {
   display: flex;
