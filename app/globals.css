@@ -300,7 +300,10 @@ a:focus-visible,
   }
   .footer a {
     display: inline-block;
-    padding-block: 0.6rem;
+    padding-block: 0.75rem;
+  }
+  .panel-input {
+    min-height: 2.75rem;
   }
 }
 
