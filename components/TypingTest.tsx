@@ -547,7 +547,7 @@ export default function TypingTest() {
             <button className="btn" onClick={acceptVulgar} autoFocus>
               onz lah
             </button>
-            <button className="btn" onClick={() => setConfirmVulgar(false)}>
+            <button className="btn quiet" onClick={() => setConfirmVulgar(false)}>
               nvm
             </button>
           </div>

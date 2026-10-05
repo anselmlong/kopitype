@@ -840,6 +840,17 @@ a:focus-visible,
 .confirm .warn {
   color: var(--error);
 }
+/* a raised button on a raised popover vanishes; a hairline keeps it a button */
+.confirm .btn:not(.quiet),
+.panel .btn:not(.quiet) {
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+@media (hover: hover) {
+  .confirm .btn:not(.quiet):hover,
+  .panel .btn:not(.quiet):hover {
+    box-shadow: none;
+  }
+}
 
 /* ---- challenge banner (replaces the mode bar during a challenge) ---- */
 .challenge-bar .challenge-label {
