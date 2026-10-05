@@ -542,6 +542,21 @@ a:focus-visible,
   color: var(--accent);
   font-size: 1.5rem;
 }
+/* before a run, the empty timer slot holds the best to beat. Smaller type
+   inside the same line box, so the countdown replaces it without a shift */
+.pb-nudge {
+  color: var(--muted);
+  font-size: 0.85rem;
+  animation: pb-in 0.3s ease-out both;
+}
+.pb-nudge-wpm {
+  color: var(--text);
+}
+@keyframes pb-in {
+  from {
+    opacity: 0;
+  }
+}
 /* ---- stats / end screen ---- */
 .stats {
   display: flex;
@@ -1259,7 +1274,8 @@ a:focus-visible,
   .stat.best .value,
   .confirm,
   .panel,
-  .lb-best {
+  .lb-best,
+  .pb-nudge {
     animation: none;
   }
   .gloss-tip {
