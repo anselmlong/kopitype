@@ -130,6 +130,8 @@ export default function TypingTest() {
   const [prevResult, setPrevResult] = useState<TestResult | null>(null);
   const [personalBest, setPersonalBest] = useState<PersonalBest | null>(null);
   const [isNewBest, setIsNewBest] = useState(false);
+  // the best to beat for the selected mode + time, shown before a run starts
+  const [idleBest, setIdleBest] = useState<PersonalBest | null>(null);
   const [pace, setPace] = useState<PacePoint[]>([]);
   const [attempted, setAttempted] = useState<string[]>([]);
 
@@ -203,6 +205,14 @@ export default function TypingTest() {
   useEffect(() => {
     reset();
   }, [reset]);
+
+  // read after mount (localStorage), and again whenever a run returns to idle
+  // so a best set a moment ago is the one you're now chasing
+  useEffect(() => {
+    setIdleBest(
+      phase === "idle" && !challenge ? getPersonalBest(modeId, duration) : null
+    );
+  }, [phase, challenge, modeId, duration]);
 
   const finish = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -547,7 +557,7 @@ export default function TypingTest() {
             <button className="btn" onClick={acceptVulgar} autoFocus>
               onz lah
             </button>
-            <button className="btn" onClick={() => setConfirmVulgar(false)}>
+            <button className="btn quiet" onClick={() => setConfirmVulgar(false)}>
               nvm
             </button>
           </div>
@@ -561,7 +571,14 @@ export default function TypingTest() {
               ? challenge
                 ? Math.floor(timeLeft) // counts up until the phrase is done
                 : Math.ceil(timeLeft)
-              : " "}
+              : idleBest
+                ? (
+                    <span className="pb-nudge">
+                      pb <span className="pb-nudge-wpm">{idleBest.wpm} wpm</span>.
+                      can beat or not?
+                    </span>
+                  )
+                : " "}
           </div>
         )}
 
