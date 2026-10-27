@@ -16,7 +16,10 @@ export default function Home() {
         <span>type until the timer stops. get your singlish wpm.</span>
         <span>
           <a href="/launch.mp4">launch video</a> ·{" "}
-          <a href="https://github.com/anselmlong/kopitype">github</a>
+          <a href="https://github.com/anselmlong/kopitype">github</a> ·{" "}
+          <a href="https://ko-fi.com/anselmlong" target="_blank" rel="noopener">
+            buy me a kopi
+          </a>
         </span>
       </footer>
     </main>
